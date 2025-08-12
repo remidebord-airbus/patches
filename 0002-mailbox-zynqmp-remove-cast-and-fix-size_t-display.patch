@@ -1,0 +1,38 @@
+From c872f0d28459e3ed58add0c79608fbfd5fa415e7 Mon Sep 17 00:00:00 2001
+From: Remi Debord <Remi.Debord@airbus.com>
+Date: Tue, 12 Aug 2025 18:39:17 +0200
+Subject: [PATCH 2/3] mailbox: zynqmp: remove cast and fix size_t display
+
+---
+ drivers/mailbox/zynqmp-ipi-mailbox.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/mailbox/zynqmp-ipi-mailbox.c b/drivers/mailbox/zynqmp-ipi-mailbox.c
+index 7f4fbe03aa71..83720e67491f 100644
+--- a/drivers/mailbox/zynqmp-ipi-mailbox.c
++++ b/drivers/mailbox/zynqmp-ipi-mailbox.c
+@@ -315,8 +315,8 @@ static int zynqmp_ipi_send_data(struct mbox_chan *chan, void *data)
+ 	if (mchan->chan_type == IPI_MB_CHNL_TX) {
+ 		/* Send request message */
+ 		if (msg && msg->len > mchan->req_buf_size && mchan->req_buf) {
+-			dev_err(dev, "channel %d message length %u > max %lu\n",
+-				mchan->chan_type, (unsigned int)msg->len,
++			dev_err(dev, "channel %d message length %zu > max %zu\n",
++				mchan->chan_type, msg->len,
+ 				mchan->req_buf_size);
+ 			return -EINVAL;
+ 		}
+@@ -328,8 +328,8 @@ static int zynqmp_ipi_send_data(struct mbox_chan *chan, void *data)
+ 	} else {
+ 		/* Send response message */
+ 		if (msg && msg->len > mchan->resp_buf_size && mchan->resp_buf) {
+-			dev_err(dev, "channel %d message length %u > max %lu\n",
+-				mchan->chan_type, (unsigned int)msg->len,
++			dev_err(dev, "channel %d message length %zu > max %zu\n",
++				mchan->chan_type, msg->len,
+ 				mchan->resp_buf_size);
+ 			return -EINVAL;
+ 		}
+-- 
+2.49.0
+
