@@ -1,0 +1,96 @@
+From 77b9922f4fe5b4b27be53a333f0904e37d0f8900 Mon Sep 17 00:00:00 2001
+From: Remi Debord <Remi.Debord@fr.airbus.com>
+Date: Mon, 12 May 2025 12:04:16 +0000
+Subject: [PATCH] flashcp: add retry mechanism
+
+---
+ misc-utils/flashcp.c | 34 +++++++++++++++++++++++++++++++---
+ 1 file changed, 31 insertions(+), 3 deletions(-)
+
+diff --git a/misc-utils/flashcp.c b/misc-utils/flashcp.c
+index 9c48637..b8ec86a 100644
+--- a/misc-utils/flashcp.c
++++ b/misc-utils/flashcp.c
+@@ -70,6 +70,13 @@
+ #define LOG_NORMAL	1
+ #define LOG_ERROR	2
+ 
++#define RETRY_MAX	3
++
++struct counters {
++	int read;
++	int write;
++};
++
+ static NORETURN void log_failure (const char *fmt, ...)
+ {
+ 	va_list ap;
+@@ -494,10 +501,13 @@ DIFF_BLOCKS:
+ 	int diffBlock = 0;
+ 	int blocks = erase.length / mtd.erasesize;
+ 	erase.length = mtd.erasesize;
++	struct counters errors = {0};
+ 
+ 	log_verbose ("\rProcessing blocks: 0/%d (%d%%)", blocks, PERCENTAGE (0,blocks));
+ 	for (int s = 1; s <= blocks; s++)
+ 	{
++		struct counters retry = {0};
++
+ 		if (size < mtd.erasesize) i = size;
+ 		log_verbose ("\rProcessing blocks: %d/%d (%d%%)", s, blocks, PERCENTAGE (s,blocks));
+ 
+@@ -512,6 +522,7 @@ DIFF_BLOCKS:
+ 		if (memcmp (src,dest,i))
+ 		{
+ 			diffBlock++;
++ERASE_BLOCK:
+ 			/* erase block */
+ 			safe_lseek(dev_fd, current_dev_block, SEEK_SET, device);
+ 			safe_memerase(dev_fd,device,&erase);
+@@ -519,15 +530,32 @@ DIFF_BLOCKS:
+ 			/* write to device */
+ 			safe_lseek(dev_fd, current_dev_block, SEEK_SET, device);
+ 			safe_write(dev_fd,src,i,written,(unsigned long long)filestat.st_size,device);
+-
++READ_BLOCK:
+ 			/* read from device */
+ 			safe_lseek(dev_fd, current_dev_block, SEEK_SET, device);
+ 			safe_read (dev_fd,device,dest,i);
+ 
+ 			/* compare buffers for write success */
+ 			if (memcmp (src,dest,i))
+-				log_failure("File does not seem to match flash data. First mismatch at 0x%.8zx-0x%.8zx\n",
++			{
++				if ((retry.read >= RETRY_MAX) && (retry.write >= RETRY_MAX))
++					log_failure("File does not seem to match flash data. First mismatch at 0x%.8zx-0x%.8zx\n",
+ 						written,written + i);
++
++				if (retry.read >= RETRY_MAX) {
++					log_verbose("\nFile does not seem to match flash data, retrying erase/write block...\n");
++					retry.write++;
++					retry.read = 0;
++					goto ERASE_BLOCK;
++				} else {
++					log_verbose("\nFile does not seem to match flash data, retrying read block...\n");
++					retry.read++;
++					goto READ_BLOCK;
++				}
++			}
++
++			errors.write += retry.write;
++			errors.read += retry.read;
+ 		}
+ 
+ 		erase.start += i;
+@@ -535,7 +563,7 @@ DIFF_BLOCKS:
+ 		size -= i;
+ 	}
+ 
+-	log_verbose ("\ndiff blocks: %d\n", diffBlock);
++	log_verbose ("\ndiff blocks: %d\nread errors: %d\nwrite errors: %d\n", diffBlock, errors.read, errors.write);
+ 
+ 	exit (EXIT_SUCCESS);
+ }
+-- 
+2.46.2
+
