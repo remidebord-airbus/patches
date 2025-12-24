@@ -1,0 +1,2464 @@
+From 73748c137ca4105dcd029c530ec1d5cb6e59e065 Mon Sep 17 00:00:00 2001
+From: Remi Debord <Remi.Debord@fr.airbus.com>
+Date: Mon, 22 Dec 2025 16:21:55 +0100
+Subject: [PATCH] bsps/arm: Add BSP for Versal RPU
+
+---
+ bsps/arm/xilinx-versal-rpu/console/console.c  | 150 +++++++
+ .../dev/serial/versal-uart.c                  | 383 ++++++++++++++++++
+ bsps/arm/xilinx-versal-rpu/include/bsp.h      |  83 ++++
+ bsps/arm/xilinx-versal-rpu/include/bsp/irq.h  |  66 +++
+ .../xilinx-versal-rpu/include/bsp/memory.h    | 107 +++++
+ .../include/bsp/xil-compat.h                  |  42 ++
+ .../include/dev/serial/versal-uart.h          |  73 ++++
+ bsps/arm/xilinx-versal-rpu/include/tm27.h     |  45 ++
+ bsps/arm/xilinx-versal-rpu/start/bspreset.c   |  64 +++
+ bsps/arm/xilinx-versal-rpu/start/bspstart.c   |  52 +++
+ .../xilinx-versal-rpu/start/bspstarthooks.c   |  81 ++++
+ bsps/arm/xilinx-versal-rpu/start/mpu-config.c |  80 ++++
+ bsps/include/peripheral_maps/xilinx_versal.h  |  89 ++++
+ spec/build/bsps/arm/xilinx-versal-rpu/abi.yml |  21 +
+ .../bsps/arm/xilinx-versal-rpu/bsprpu.yml     |  17 +
+ .../bsps/arm/xilinx-versal-rpu/bsprpu0.yml    |  17 +
+ .../bsps/arm/xilinx-versal-rpu/bsprpu1.yml    |  17 +
+ spec/build/bsps/arm/xilinx-versal-rpu/grp.yml |  95 +++++
+ .../bsps/arm/xilinx-versal-rpu/linkcmds.yml   |  46 +++
+ .../arm/xilinx-versal-rpu/linkcmdsmemory.yml  |  52 +++
+ spec/build/bsps/arm/xilinx-versal-rpu/obj.yml |  44 ++
+ .../bsps/arm/xilinx-versal-rpu/optclkuart.yml |  17 +
+ .../arm/xilinx-versal-rpu/optconminor.yml     |  17 +
+ .../arm/xilinx-versal-rpu/optconsoleirq.yml   |  17 +
+ .../arm/xilinx-versal-rpu/optlockstep.yml     |  37 ++
+ .../arm/xilinx-versal-rpu/optmematcmlen.yml   |  22 +
+ .../arm/xilinx-versal-rpu/optmematcmori.yml   |  20 +
+ .../arm/xilinx-versal-rpu/optmembtcmlen.yml   |  22 +
+ .../arm/xilinx-versal-rpu/optmembtcmori.yml   |  20 +
+ .../arm/xilinx-versal-rpu/optmemddrlen.yml    |  20 +
+ .../arm/xilinx-versal-rpu/optmemddrori.yml    |  20 +
+ .../arm/xilinx-versal-rpu/optmemddrrpulen.yml |  21 +
+ .../arm/xilinx-versal-rpu/optmemddrrpuori.yml |  21 +
+ .../arm/xilinx-versal-rpu/optmemdevpllen.yml  |  20 +
+ .../arm/xilinx-versal-rpu/optmemdevplori.yml  |  20 +
+ .../arm/xilinx-versal-rpu/optmemdevpslen.yml  |  19 +
+ .../arm/xilinx-versal-rpu/optmemdevpsori.yml  |  19 +
+ .../xilinx-versal-rpu/optmemnocachelen.yml    |  19 +
+ .../xilinx-versal-rpu/optmemnocacheori.yml    |  19 +
+ .../arm/xilinx-versal-rpu/optmemocmlen.yml    |  21 +
+ .../arm/xilinx-versal-rpu/optmemocmori.yml    |  21 +
+ .../arm/xilinx-versal-rpu/optresetvec.yml     |  16 +
+ .../arm/xilinx-versal-rpu/optsplitindex.yml   |  27 ++
+ spec/build/bsps/optxilclockttcbaseaddr.yml    |   2 +
+ spec/build/bsps/optxilclockttcirq.yml         |   4 +
+ 45 files changed, 2085 insertions(+)
+ create mode 100644 bsps/arm/xilinx-versal-rpu/console/console.c
+ create mode 100644 bsps/arm/xilinx-versal-rpu/dev/serial/versal-uart.c
+ create mode 100644 bsps/arm/xilinx-versal-rpu/include/bsp.h
+ create mode 100644 bsps/arm/xilinx-versal-rpu/include/bsp/irq.h
+ create mode 100644 bsps/arm/xilinx-versal-rpu/include/bsp/memory.h
+ create mode 100644 bsps/arm/xilinx-versal-rpu/include/bsp/xil-compat.h
+ create mode 100644 bsps/arm/xilinx-versal-rpu/include/dev/serial/versal-uart.h
+ create mode 100644 bsps/arm/xilinx-versal-rpu/include/tm27.h
+ create mode 100644 bsps/arm/xilinx-versal-rpu/start/bspreset.c
+ create mode 100644 bsps/arm/xilinx-versal-rpu/start/bspstart.c
+ create mode 100644 bsps/arm/xilinx-versal-rpu/start/bspstarthooks.c
+ create mode 100644 bsps/arm/xilinx-versal-rpu/start/mpu-config.c
+ create mode 100644 bsps/include/peripheral_maps/xilinx_versal.h
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/abi.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/bsprpu.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/bsprpu0.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/bsprpu1.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/obj.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optclkuart.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optconminor.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optconsoleirq.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optlockstep.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmematcmlen.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmematcmori.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmlen.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmori.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpslen.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpsori.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemocmori.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optresetvec.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optsplitindex.yml
+
+diff --git a/bsps/arm/xilinx-versal-rpu/console/console.c b/bsps/arm/xilinx-versal-rpu/console/console.c
+new file mode 100644
+index 0000000000..071f33b3f5
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/console/console.c
+@@ -0,0 +1,150 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsAArch64XilinxVersal
++ *
++ * @brief This source file contains this BSP's console configuration.
++ */
++
++/*
++ * Copyright (C) 2021 Gedare Bloom <gedare@rtems.org>
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <rtems/console.h>
++#include <rtems/bspIo.h>
++#include <rtems/sysinit.h>
++
++#include <bsp/irq.h>
++#include <dev/serial/arm-pl011.h>
++#include <dev/serial/versal-uart.h>
++#include <peripheral_maps/xilinx_versal.h>
++
++#include <bspopts.h>
++
++static versal_pl011_context versal_uart_instances[2] = {
++  {
++    .pl011_ctx = {
++      .base = RTEMS_TERMIOS_DEVICE_CONTEXT_INITIALIZER("Versal UART 0"),
++      .regs = (arm_pl011_uart *) VERSAL_UART0,
++      .irq = VERSAL_IRQ_UART_0,
++      .clock = VERSAL_CLOCK_UART,
++      .initial_baud = VERSAL_UART_DEFAULT_BAUD
++    }
++  }, {
++    .pl011_ctx = {
++      .base = RTEMS_TERMIOS_DEVICE_CONTEXT_INITIALIZER("Versal UART 1"),
++      .regs = (arm_pl011_uart *) VERSAL_UART1,
++      .irq = VERSAL_IRQ_UART_1,
++      .clock = VERSAL_CLOCK_UART,
++      .initial_baud = VERSAL_UART_DEFAULT_BAUD
++    }
++  }
++};
++
++rtems_status_code console_initialize(
++  rtems_device_major_number major,
++  rtems_device_minor_number minor,
++  void *arg
++)
++{
++  (void) major;
++  (void) minor;
++  (void) arg;
++
++  size_t i;
++
++  rtems_termios_initialize();
++
++  for (i = 0; i < RTEMS_ARRAY_SIZE(versal_uart_instances); ++i) {
++    char uart[] = "/dev/ttySX";
++
++    uart[sizeof(uart) - 2] = (char) ('0' + i);
++    rtems_termios_device_install(
++      &uart[0],
++      &versal_uart_handler,
++      NULL,
++      &versal_uart_instances[i].pl011_ctx.base
++    );
++
++    if (i == BSP_CONSOLE_MINOR) {
++      link(&uart[0], CONSOLE_DEVICE_NAME);
++    }
++  }
++
++  return RTEMS_SUCCESSFUL;
++}
++
++void versal_debug_console_flush(void)
++{
++  versal_uart_reset_tx_flush(
++    &versal_uart_instances[BSP_CONSOLE_MINOR].pl011_ctx.base
++  );
++}
++
++static void versal_debug_console_out(char c)
++{
++  rtems_termios_device_context *base =
++    &versal_uart_instances[BSP_CONSOLE_MINOR].pl011_ctx.base;
++
++  arm_pl011_write_polled(base, c);
++}
++
++static void versal_debug_console_init(void)
++{
++  rtems_termios_device_context *base =
++    &versal_uart_instances[BSP_CONSOLE_MINOR].pl011_ctx.base;
++
++  (void) versal_uart_initialize(base);
++  BSP_output_char = versal_debug_console_out;
++}
++
++static void versal_debug_console_early_init(char c)
++{
++  rtems_termios_device_context *base =
++    &versal_uart_instances[BSP_CONSOLE_MINOR].pl011_ctx.base;
++
++  (void) versal_uart_initialize(base);
++  BSP_output_char = versal_debug_console_out;
++  versal_debug_console_out(c);
++}
++
++static int versal_debug_console_in(void)
++{
++  rtems_termios_device_context *base =
++    &versal_uart_instances[BSP_CONSOLE_MINOR].pl011_ctx.base;
++
++  return arm_pl011_read_polled(base);
++}
++
++BSP_output_char_function_type BSP_output_char = versal_debug_console_early_init;
++
++BSP_polling_getchar_function_type BSP_poll_char = versal_debug_console_in;
++
++RTEMS_SYSINIT_ITEM(
++  versal_debug_console_init,
++  RTEMS_SYSINIT_BSP_START,
++  RTEMS_SYSINIT_ORDER_LAST_BUT_5
++);
+diff --git a/bsps/arm/xilinx-versal-rpu/dev/serial/versal-uart.c b/bsps/arm/xilinx-versal-rpu/dev/serial/versal-uart.c
+new file mode 100644
+index 0000000000..96bca644c7
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/dev/serial/versal-uart.c
+@@ -0,0 +1,383 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/*
++ * Copyright (C) 2022 Chris Johns <chris@contemporary.software>
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <dev/serial/versal-uart.h>
++#include <dev/serial/arm-pl011.h>
++#include <bsp/irq.h>
++
++#include <bspopts.h>
++
++static uint32_t versal_uart_intr_all(void)
++{
++  return PL011_UARTI_OEI |
++    PL011_UARTI_BEI |
++    PL011_UARTI_PEI |
++    PL011_UARTI_FEI |
++    PL011_UARTI_RTI |
++    PL011_UARTI_TXI |
++    PL011_UARTI_RXI |
++    PL011_UARTI_DSRMI |
++    PL011_UARTI_DCDMI |
++    PL011_UARTI_CTSMI |
++    PL011_UARTI_RIMI;
++}
++
++#ifdef BSP_CONSOLE_USE_INTERRUPTS
++static void versal_uart_intr_clear(volatile arm_pl011_uart *regs, uint32_t ints)
++{
++  regs->base.uarticr = ints;
++}
++
++static void versal_uart_intr_clearall(volatile arm_pl011_uart *regs)
++{
++  versal_uart_intr_clear(regs, versal_uart_intr_all());
++}
++
++static void versal_uart_intr_enable(volatile arm_pl011_uart *regs, uint32_t ints)
++{
++  regs->base.uartimsc |= ints;
++}
++#endif
++
++static void versal_uart_intr_disable(volatile arm_pl011_uart *regs, uint32_t ints)
++{
++  regs->base.uartimsc &= ~ints;
++}
++
++static void versal_uart_intr_disableall(volatile arm_pl011_uart *regs)
++{
++  versal_uart_intr_disable(regs, versal_uart_intr_all());
++}
++
++#ifdef BSP_CONSOLE_USE_INTERRUPTS
++static bool versal_uart_flags_clear(volatile arm_pl011_uart *regs, uint32_t flags)
++{
++  return (regs->base.uartfr & flags) == 0;
++}
++
++static void versal_uart_interrupt(void *arg)
++{
++  rtems_termios_tty *tty = arg;
++  versal_pl011_context *ctx = rtems_termios_get_device_context(tty);
++  volatile arm_pl011_uart *regs = (volatile arm_pl011_uart *) ctx->pl011_ctx.regs;
++  uint32_t uartmis = regs->base.uartmis;
++
++  versal_uart_intr_clear(regs, uartmis);
++
++  if ((uartmis & (PL011_UARTI_RTI | PL011_UARTI_RXI)) != 0) {
++    char buf[32];
++    int c = 0;
++    while (c < sizeof(buf) &&
++           versal_uart_flags_clear(regs, PL011_UARTFR_RXFE)) {
++      buf[c++] = (char) PL011_UARTDR_DATA_GET(regs->base.uartdr);
++    }
++    rtems_termios_enqueue_raw_characters(tty, buf, c);
++  }
++
++  if (ctx->transmitting) {
++    int sent = ctx->pl011_ctx.tx_queued_chars;
++    ctx->transmitting = false;
++    ctx->pl011_ctx.tx_queued_chars = 0;
++    versal_uart_intr_disable(regs, PL011_UARTI_TXI);
++    rtems_termios_dequeue_characters(tty, sent);
++  }
++}
++#endif
++
++void versal_uart_reset_tx_flush(rtems_termios_device_context *base)
++{
++  volatile arm_pl011_uart *regs = (volatile arm_pl011_uart *) arm_pl011_get_regs(base);
++  int c = 4;
++
++  while (c-- > 0) {
++    arm_pl011_write_polled(base, '\r');
++  }
++
++  while ((regs->base.uartfr & PL011_UARTFR_TXFE) == 0) {
++    /* Wait for empty */
++  }
++  while ((regs->base.uartfr & PL011_UARTFR_BUSY) != 0) {
++    /* Wait for empty */
++  }
++}
++
++int versal_uart_initialize(rtems_termios_device_context *base)
++{
++  volatile pl011_base *regs = (volatile pl011_base *)arm_pl011_get_regs(base);
++  arm_pl011_context *ctx = (arm_pl011_context *) base;
++  uint32_t maxerr = 3;
++  uint32_t ibauddiv = 0;
++  uint32_t fbauddiv = 0;
++  int rv;
++
++  versal_uart_reset_tx_flush(base);
++
++  rv = arm_pl011_compute_baudrate_params(
++    &ibauddiv,
++    &fbauddiv,
++    VERSAL_UART_DEFAULT_BAUD,
++    ctx->clock,
++    maxerr
++  );
++  if (rv != 0) {
++    return rv;
++  }
++
++  /* Line control: 8-bit word length, no parity, no FIFO, 1 stop bit */
++  regs->uartlcr_h = PL011_UARTLCR_H_WLEN( PL011_UARTLCR_H_WLEN_8 )
++    | PL011_UARTLCR_H_FEN;
++
++  /* Control: receive, transmit, uart enable, no CTS, no RTS, no loopback */
++  regs->uartcr = PL011_UARTCR_RXE
++    | PL011_UARTCR_TXE
++    | PL011_UARTCR_UARTEN;
++
++  regs->uartibrd = ibauddiv;
++  regs->uartfbrd = fbauddiv;
++
++  return 0;
++}
++
++static bool versal_uart_first_open(
++  rtems_termios_tty *tty,
++  rtems_termios_device_context *base,
++  struct termios *term,
++  rtems_libio_open_close_args_t *args
++)
++{
++  (void) term;
++  (void) args;
++
++#ifdef BSP_CONSOLE_USE_INTERRUPTS
++  versal_pl011_context *ctx = (versal_pl011_context *) base;
++  volatile arm_pl011_uart *regs = (volatile arm_pl011_uart *) ctx->pl011_ctx.regs;
++  rtems_status_code sc;
++
++  ctx->transmitting = false;
++  ctx->pl011_ctx.tx_queued_chars = 0;
++  ctx->pl011_ctx.needs_sw_triggered_tx_irq = true;
++#endif
++
++  rtems_termios_set_initial_baud(tty, VERSAL_UART_DEFAULT_BAUD);
++  versal_uart_initialize(base);
++
++#ifdef BSP_CONSOLE_USE_INTERRUPTS
++  regs->base.uartifls = PL011_UARTIFLS_RXIFLSEL(2) | PL011_UARTIFLS_TXIFLSEL(2);
++  regs->base.uartlcr_h |= PL011_UARTLCR_H_FEN;
++  versal_uart_intr_disableall(regs);
++  sc = rtems_interrupt_handler_install(
++    ctx->pl011_ctx.irq,
++    "UART",
++    RTEMS_INTERRUPT_SHARED,
++    versal_uart_interrupt,
++    tty
++  );
++  if (sc != RTEMS_SUCCESSFUL) {
++    return false;
++  }
++  versal_uart_intr_clearall(regs);
++  versal_uart_intr_enable(regs, PL011_UARTI_RTI | PL011_UARTI_RXI);
++#endif
++
++  return true;
++}
++
++#ifdef BSP_CONSOLE_USE_INTERRUPTS
++static void versal_uart_last_close(
++  rtems_termios_tty *tty,
++  rtems_termios_device_context *base,
++  rtems_libio_open_close_args_t *args
++)
++{
++  (void) args;
++
++  versal_pl011_context *ctx = (versal_pl011_context *) base;
++  rtems_interrupt_handler_remove(ctx->pl011_ctx.irq, versal_uart_interrupt, tty);
++}
++#endif
++
++static void versal_uart_write_support(
++  rtems_termios_device_context *base,
++  const char *buf,
++  size_t len
++)
++{
++#ifdef BSP_CONSOLE_USE_INTERRUPTS
++  versal_pl011_context *ctx = (versal_pl011_context *) base;
++  volatile arm_pl011_uart *regs = (volatile arm_pl011_uart *) ctx->pl011_ctx.regs;
++
++  if (len > 0) {
++    size_t len_remaining = len;
++    const char *p = &buf[0];
++    versal_uart_intr_enable(regs, PL011_UARTI_TXI);
++    /*
++     * The PL011 IP in the Versal needs preloading the TX FIFO with
++     * exactly 17 characters for the first TX interrupt to be
++     * generated.
++     */
++    if (ctx->pl011_ctx.needs_sw_triggered_tx_irq) {
++      ctx->pl011_ctx.needs_sw_triggered_tx_irq = false;
++      for (int i = 0; i < 17; ++i) {
++        regs->base.uartdr = PL011_UARTDR_DATA('\r');
++      }
++    }
++    while (versal_uart_flags_clear(regs, PL011_UARTFR_TXFF) &&
++           len_remaining > 0) {
++      regs->base.uartdr = PL011_UARTDR_DATA(*p++);
++      --len_remaining;
++    }
++    ctx->pl011_ctx.tx_queued_chars = len - len_remaining;
++    ctx->transmitting = true;
++  }
++#else
++  ssize_t i;
++  for (i = 0; i < len; ++i) {
++    arm_pl011_write_polled(base, buf[i]);
++  }
++#endif
++}
++
++static bool versal_uart_set_attributes(
++  rtems_termios_device_context *context,
++  const struct termios *term
++)
++{
++  versal_pl011_context *ctx = (versal_pl011_context *) context;
++  volatile arm_pl011_uart *regs = (volatile arm_pl011_uart *) ctx->pl011_ctx.regs;
++  int32_t baud;
++  uint32_t ibauddiv = 0;
++  uint32_t fbauddiv = 0;
++  uint32_t mode = 0;
++  int rc;
++
++  /*
++   * Determine the baud rate
++   */
++  baud = rtems_termios_baud_to_number(term->c_ospeed);
++
++  if (baud > 0) {
++    uint32_t maxerr = 3;
++
++    rc = arm_pl011_compute_baudrate_params(
++      &ibauddiv,
++      &fbauddiv,
++      baud,
++      ctx->pl011_ctx.clock,
++      maxerr
++    );
++    if (rc != 0) {
++      return rc;
++    }
++  }
++
++  /*
++   * Configure the mode register
++   */
++  mode = regs->base.uartlcr_h & PL011_UARTLCR_H_FEN;
++
++  /*
++   * Parity
++   */
++  if ((term->c_cflag & PARENB) != 0) {
++    mode |= PL011_UARTLCR_H_PEN;
++    if ((term->c_cflag & PARODD) == 0) {
++      mode |= PL011_UARTLCR_H_EPS;
++    }
++  }
++
++  /*
++   * Character Size
++   */
++  switch (term->c_cflag & CSIZE)
++  {
++  case CS5:
++    mode = PL011_UARTLCR_H_WLEN_SET(mode, PL011_UARTLCR_H_WLEN_5);
++    break;
++  case CS6:
++    mode = PL011_UARTLCR_H_WLEN_SET(mode, PL011_UARTLCR_H_WLEN_6);
++    break;
++  case CS7:
++    mode = PL011_UARTLCR_H_WLEN_SET(mode, PL011_UARTLCR_H_WLEN_7);
++    break;
++  case CS8:
++  default:
++    mode = PL011_UARTLCR_H_WLEN_SET(mode, PL011_UARTLCR_H_WLEN_8);
++    break;
++  }
++
++  /*
++   * Stop Bits
++   */
++  if (term->c_cflag & CSTOPB) {
++    /* 2 stop bits */
++    mode |= PL011_UARTLCR_H_STP2;
++  }
++
++  versal_uart_intr_disableall(regs);
++
++  /*
++   * Wait for any data in the TXFIFO to be sent then wait while the
++   * transmiter is active.
++   */
++  while ((regs->base.uartfr & PL011_UARTFR_TXFE) == 0 ||
++         (regs->base.uartfr & PL011_UARTFR_BUSY) != 0) {
++    /* Wait */
++  }
++
++  regs->base.uartcr = PL011_UARTCR_UARTEN;
++  /* Ignore baud rate of B0. There are no modem control lines to de-assert */
++  if (baud > 0) {
++    regs->base.uartibrd = ibauddiv;
++    regs->base.uartfbrd = fbauddiv;
++  }
++  regs->base.uartlcr_h = mode;
++
++  /* Control: receive, transmit, uart enable, no CTS, no RTS, no loopback */
++  regs->base.uartcr = PL011_UARTCR_RXE
++    | PL011_UARTCR_TXE
++    | PL011_UARTCR_UARTEN;
++
++#ifdef BSP_CONSOLE_USE_INTERRUPTS
++  versal_uart_intr_clearall(regs);
++  versal_uart_intr_enable(regs, PL011_UARTI_RTI | PL011_UARTI_RXI);
++#endif
++
++  return true;
++}
++
++const rtems_termios_device_handler versal_uart_handler = {
++  .first_open = versal_uart_first_open,
++  .set_attributes = versal_uart_set_attributes,
++  .write = versal_uart_write_support,
++#ifdef BSP_CONSOLE_USE_INTERRUPTS
++  .last_close = versal_uart_last_close,
++  .mode = TERMIOS_IRQ_DRIVEN
++#else
++  .poll_read = arm_pl011_read_polled,
++  .mode = TERMIOS_POLLED
++#endif
++};
+diff --git a/bsps/arm/xilinx-versal-rpu/include/bsp.h b/bsps/arm/xilinx-versal-rpu/include/bsp.h
+new file mode 100644
+index 0000000000..39d21e71e2
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/include/bsp.h
+@@ -0,0 +1,83 @@
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsARMVersalRPU
++ *
++ * @brief This header file provides BSP-specific interfaces.
++ */
++
++/*
++ * Copyright (C) 2024 embedded brains GmbH & Co. KG
++ * Copyright (C) 2023 Reflex Aerospace GmbH
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef LIBBSP_ARM_XILINX_VERSAL_RPU_BSP_H
++#define LIBBSP_ARM_XILINX_VERSAL_RPU_BSP_H
++
++/**
++ * @defgroup RTEMSBSPsARMVersalRPU \
++ *   AMD Versal SoC - Real-time Processing Unit
++ *
++ * @ingroup RTEMSBSPsARM
++ *
++ * @brief This group contains the BSP for the Real-time Processing Unit (RPU)
++ *   contained in AMD Versal SoC devices.
++ *
++ * @{
++ */
++
++#include <bspopts.h>
++
++#define BSP_FEATURE_IRQ_EXTENSION
++
++#ifndef ASM
++
++#include <rtems.h>
++
++#include <bsp/default-initial-extension.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
++
++#define BSP_ARM_GIC_CPUIF_BASE 0x00F9001000
++
++#define BSP_ARM_GIC_DIST_BASE 0xF9000000
++
++#if !defined(VERSAL_RPU_LOCK_STEP_MODE) && VERSAL_RPU_SPLIT_INDEX != 0
++#define BSP_ARM_GIC_MULTI_PROCESSOR_SECONDARY
++#endif
++
++void versal_debug_console_flush(void);
++
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
++#endif /* ASM */
++
++/** @} */
++
++#endif /* LIBBSP_ARM_XILINX_VERSAL_RPU_BSP_H */
+diff --git a/bsps/arm/xilinx-versal-rpu/include/bsp/irq.h b/bsps/arm/xilinx-versal-rpu/include/bsp/irq.h
+new file mode 100644
+index 0000000000..be526c5a2f
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/include/bsp/irq.h
+@@ -0,0 +1,66 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsARMVersalRPU
++ *
++ * @brief This header file provides BSP-specific interrupt interfaces.
++ */
++
++/*
++ * Copyright (C) 2024 embedded brains GmbH & Co. KG
++ * Copyright (C) 2023 Reflex Aerospace GmbH
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef LIBBSP_ARM_XILINX_VERSAL_RPU_IRQ_H
++#define LIBBSP_ARM_XILINX_VERSAL_RPU_IRQ_H
++
++#ifndef ASM
++
++#include <rtems.h>
++
++#include <bspopts.h>
++#include <dev/irq/arm-gic-irq.h>
++#include <peripheral_maps/xilinx_versal.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
++#ifndef VERSAL_RPU_LOCK_STEP_MODE
++#define BSP_IRQ_HAVE_GET_SET_AFFINITY
++#endif
++
++#define BSP_INTERRUPT_VECTOR_COUNT 188
++
++/** @} */
++
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
++#endif /* ASM */
++
++#endif /* LIBBSP_ARM_XILINX_VERSAL_RPU_IRQ_H */
+diff --git a/bsps/arm/xilinx-versal-rpu/include/bsp/memory.h b/bsps/arm/xilinx-versal-rpu/include/bsp/memory.h
+new file mode 100644
+index 0000000000..f1e7aec886
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/include/bsp/memory.h
+@@ -0,0 +1,107 @@
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsARMVersalRPU
++ *
++ * @brief This header file provides BSP-specific memory interfaces.
++ */
++
++/*
++ * Copyright (C) 2024 embedded brains GmbH & Co. KG
++ * Copyright (C) 2023 Reflex Aerospace GmbH
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef LIBBSP_ARM_XILINX_VERSAL_RPU_BSP_MEMORY_H
++#define LIBBSP_ARM_XILINX_VERSAL_RPU_BSP_MEMORY_H
++
++#include <rtems/score/armv7-pmsa.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
++/**
++ * @addtogroup RTEMSBSPsARMVersalRPU
++ *
++ * @{
++ */
++
++extern char versal_memory_atcm_begin[];
++extern char versal_memory_atcm_end[];
++extern char versal_memory_atcm_size[];
++
++extern char versal_memory_btcm_begin[];
++extern char versal_memory_btcm_end[];
++extern char versal_memory_btcm_size[];
++
++extern char versal_memory_ddr_begin[];
++extern char versal_memory_ddr_end[];
++extern char versal_memory_ddr_size[];
++
++extern char versal_memory_nocache_begin[];
++extern char versal_memory_nocache_end[];
++extern char versal_memory_nocache_size[];
++
++extern char versal_memory_devpl_begin[];
++extern char versal_memory_devpl_end[];
++extern char versal_memory_devpl_size[];
++
++extern char versal_memory_devps_begin[];
++extern char versal_memory_devps_end[];
++extern char versal_memory_devps_size[];
++
++extern char versal_memory_ocm_begin[];
++extern char versal_memory_ocm_end[];
++extern char versal_memory_ocm_size[];
++
++/**
++ * @brief Versal Adaptive SoC specific set up of the MMU.
++ *
++ * Provide in the application to override the defaults in the BSP.
++ */
++void versal_setup_mpu_and_cache(void);
++
++/**
++ * @brief This table defines the Versal Adaptive SoC specific MPU
++ * regions.
++ *
++ * The table entry count is provided by ::versal_mpu_region_count.
++ *
++ * The application may provide this table to override the defaults in the BSP.
++ */
++extern const ARMV7_PMSA_Region versal_mpu_regions[];
++
++/**
++ * @brief This constant contains the entry count of the ::versal_mpu_regions
++ *   table.
++ */
++extern const size_t versal_mpu_region_count;
++
++/** @} */
++
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
++#endif /* LIBBSP_ARM_XILINX_VERSAL_RPU_BSP_MEMORY_H */
+diff --git a/bsps/arm/xilinx-versal-rpu/include/bsp/xil-compat.h b/bsps/arm/xilinx-versal-rpu/include/bsp/xil-compat.h
+new file mode 100644
+index 0000000000..acbe01d3cc
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/include/bsp/xil-compat.h
+@@ -0,0 +1,42 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsARMVersalRPU
++ *
++ * @brief This header file provides BSP-specific interfaces.
++ */
++
++/*
++ * Copyright (C) 2024 On-Line Applications Research Corporation (OAR)
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef LIBBSP_ARM_XILINX_VERSAL_RPU_BSP_XIL_COMPAT_H
++#define LIBBSP_ARM_XILINX_VERSAL_RPU_BSP_XIL_COMPAT_H
++
++#include <bsp/xil-compat-common.h>
++#define ARMR5
++
++#endif
+diff --git a/bsps/arm/xilinx-versal-rpu/include/dev/serial/versal-uart.h b/bsps/arm/xilinx-versal-rpu/include/dev/serial/versal-uart.h
+new file mode 100644
+index 0000000000..ea6e53851b
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/include/dev/serial/versal-uart.h
+@@ -0,0 +1,73 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/**
++ * @file
++ *
++ * @ingroup versal_uart
++ *
++ * @brief Xilinx Versal UART support.
++ */
++
++/*
++ * Copyright (C) 2021 Gedare Bloom <gedare@rtems.org>
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef LIBBSP_ARM_XILINX_VERSAL_UART_H
++#define LIBBSP_ARM_XILINX_VERSAL_UART_H
++
++#include <rtems/termiostypes.h>
++#include <dev/serial/arm-pl011.h>
++#include <dev/serial/arm-pl011-regs.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
++/**
++ * @defgroup versal_uart Xilinx Versal UART Support
++ * @ingroup RTEMSBSPsARMVersal
++ * @brief UART Support
++ *
++ * This driver operates an instance of the Xilinx UART present in the
++ * family of Xilinx Versal SoCs.
++ */
++
++typedef struct {
++  arm_pl011_context pl011_ctx;
++  volatile bool transmitting;
++} versal_pl011_context;
++
++extern const rtems_termios_device_handler versal_uart_handler;
++
++#define VERSAL_UART_DEFAULT_BAUD 115200
++
++int versal_uart_initialize(rtems_termios_device_context *base);
++
++void versal_uart_reset_tx_flush(rtems_termios_device_context *base);
++
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
++#endif /* LIBBSP_ARM_XILINX_VERSAL_UART_H */
+diff --git a/bsps/arm/xilinx-versal-rpu/include/tm27.h b/bsps/arm/xilinx-versal-rpu/include/tm27.h
+new file mode 100644
+index 0000000000..ebd61d1af2
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/include/tm27.h
+@@ -0,0 +1,45 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsARMVersalRPU
++ *
++ * @brief This header file provides a Time Test 27 support implementation.
++ */
++
++/*
++ * Copyright (C) 2013, 2024 embedded brains GmbH & Co. KG
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef _RTEMS_TMTEST27
++#error "This is an RTEMS internal file you must not include directly."
++#endif
++
++#ifndef __tm27_h
++#define __tm27_h
++
++#include <dev/irq/arm-gic-tm27.h>
++
++#endif /* __tm27_h */
+diff --git a/bsps/arm/xilinx-versal-rpu/start/bspreset.c b/bsps/arm/xilinx-versal-rpu/start/bspreset.c
+new file mode 100644
+index 0000000000..3264d33984
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/start/bspreset.c
+@@ -0,0 +1,64 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsARMVersalRPU
++ *
++ * @brief This source file contains the implementation of bsp_reset().
++ */
++
++/*
++ * Copyright (C) 2024 embedded brains GmbH & Co. KG
++ * Copyright (C) 2023 Reflex Aerospace GmbH
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <bsp.h>
++#include <bsp/bootcard.h>
++
++void bsp_reset( rtems_fatal_source source, rtems_fatal_code code )
++{
++  /* CRL_APB_RESET_CTRL */
++  volatile uint32_t *reset_ctrl = (volatile uint32_t *) 0xff5e0218;
++
++  (void) source;
++  (void) code;
++
++  versal_debug_console_flush();
++
++  /*
++   * This is a workaround for:
++   *
++   * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108658
++   */
++  __asm__ volatile ("");
++
++  while (true) {
++    /*
++     * Request a soft system reset.  This is a system-level reset which is the
++     * equivalent to asserting the external PS_SRST_B reset signal pin.
++     */
++    *reset_ctrl |= UINT32_C(0x10);
++  }
++}
+diff --git a/bsps/arm/xilinx-versal-rpu/start/bspstart.c b/bsps/arm/xilinx-versal-rpu/start/bspstart.c
+new file mode 100644
+index 0000000000..b6609aebc2
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/start/bspstart.c
+@@ -0,0 +1,52 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsARMVersalRPU
++ *
++ * @brief This source file contains the implementation of bsp_start().
++ */
++
++/*
++ * Copyright (C) 2024 embedded brains GmbH & Co. KG
++ * Copyright (C) 2023 Reflex Aerospace GmbH
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <bsp.h>
++#include <bsp/bootcard.h>
++#include <bsp/irq-generic.h>
++#include <bsp/linker-symbols.h>
++
++#include <libcpu/arm-cp15.h>
++
++void bsp_start(void)
++{
++  bsp_interrupt_initialize();
++
++  rtems_cache_coherent_add_area(
++    bsp_section_nocacheheap_begin,
++    (uintptr_t) bsp_section_nocacheheap_size
++  );
++}
+diff --git a/bsps/arm/xilinx-versal-rpu/start/bspstarthooks.c b/bsps/arm/xilinx-versal-rpu/start/bspstarthooks.c
+new file mode 100644
+index 0000000000..b3338ed23f
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/start/bspstarthooks.c
+@@ -0,0 +1,81 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsARMVersalRPU
++ *
++ * @brief This source file contains the implementation of bsp_start_hook_0().
++ */
++
++/*
++ * Copyright (C) 2024 embedded brains GmbH & Co. KG
++ * Copyright (C) 2023 Reflex Aerospace GmbH
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <bsp/start.h>
++
++#define ARM_CP15_TEXT_SECTION BSP_START_TEXT_SECTION
++#define ARMV7_PMSA_TEXT_SECTION BSP_START_TEXT_SECTION
++
++#include <bsp/memory.h>
++#include <libcpu/arm-cp15.h>
++
++BSP_START_TEXT_SECTION void bsp_start_hook_0(void)
++{
++  /* Do nothing */
++}
++
++BSP_START_TEXT_SECTION void bsp_start_hook_1(void)
++{
++  uint32_t index = 0;
++
++  for (size_t i = 0; i < versal_mpu_region_count; ++i) {
++    const ARMV7_PMSA_Region *region = &versal_mpu_regions[i];
++    index = _ARMV7_PMSA_Add_regions(
++      index,
++      region->begin,
++      region->size,
++      region->attributes
++    );
++  }
++
++  arm_cp15_instruction_cache_invalidate();
++  arm_cp15_data_cache_all_invalidate();
++  _ARM_Data_synchronization_barrier();
++  _ARM_Instruction_synchronization_barrier();
++
++  uint32_t control = arm_cp15_get_control();
++  control &= ~ARM_CP15_CTRL_A;
++  control &= ~ARM_CP15_CTRL_V;
++  control |= ARM_CP15_CTRL_M;
++  control |= ARM_CP15_CTRL_C;
++  control |= ARM_CP15_CTRL_I;
++  control |= ARM_CP15_CTRL_Z;
++  arm_cp15_set_control(control);
++  _ARM_Data_synchronization_barrier();
++  _ARM_Instruction_synchronization_barrier();
++
++  bsp_start_clear_bss();
++}
+diff --git a/bsps/arm/xilinx-versal-rpu/start/mpu-config.c b/bsps/arm/xilinx-versal-rpu/start/mpu-config.c
+new file mode 100644
+index 0000000000..5ed6dfd29a
+--- /dev/null
++++ b/bsps/arm/xilinx-versal-rpu/start/mpu-config.c
+@@ -0,0 +1,80 @@
++/* SPDX-License-Identifier: BSD-2-Clause */
++
++/**
++ * @file
++ *
++ * @ingroup RTEMSBSPsARMVersalRPU
++ *
++ * @brief This source file contains the implementation of
++ * zynqmp_setup_mpu_and_cache().
++ */
++
++/*
++ * Copyright (C) 2025 Airbus Defence and Space
++ *
++ * Written by Remi Debord <remi.debord@airbus.com>
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <bsp/memory.h>
++#include <bsp/start.h>
++
++BSP_START_DATA_SECTION const ARMV7_PMSA_Region
++versal_mpu_regions[] = {
++  {
++    .begin = (uintptr_t)versal_memory_atcm_begin,
++    .size = (uintptr_t)versal_memory_atcm_size,
++    .attributes = ARMV7_PMSA_READ_WRITE_UNCACHED
++  }, {
++    .begin = (uintptr_t)versal_memory_btcm_begin,
++    .size = (uintptr_t)versal_memory_btcm_size,
++    .attributes = ARMV7_PMSA_READ_WRITE_UNCACHED
++  }, {
++    .begin = (uintptr_t)versal_memory_ddr_begin,
++    .size = (uintptr_t)versal_memory_ddr_size,
++    .attributes = ARMV7_PMSA_READ_WRITE_CACHED
++  }, {
++    .begin = (uintptr_t)versal_memory_ddr_rpu_begin,
++    .size = (uintptr_t)versal_memory_ddr_rpu_size,
++    .attributes = ARMV7_PMSA_READ_WRITE_CACHED
++  }, {
++    .begin = (uintptr_t)versal_memory_devpl_begin,
++    .size = (uintptr_t)versal_memory_devpl_size,
++    .attributes = ARMV7_PMSA_SHAREABLE_DEVICE
++  }, {
++    .begin = (uintptr_t)versal_memory_devps_begin,
++    .size = (uintptr_t)versal_memory_devps_size,
++    .attributes = ARMV7_PMSA_NON_SHAREABLE_DEVICE
++  }, {
++    .begin = (uintptr_t)versal_memory_ocm_begin,
++    .size = (uintptr_t)versal_memory_ocm_size,
++    .attributes = ARMV7_PMSA_NON_SHAREABLE_DEVICE
++  }, {
++    .begin = (uintptr_t)versal_memory_nocache_begin,
++    .size = (uintptr_t)versal_memory_nocache_size,
++    .attributes = ARMV7_PMSA_READ_WRITE_UNCACHED
++  }
++};
++
++BSP_START_DATA_SECTION const size_t
++versal_mpu_region_count = RTEMS_ARRAY_SIZE(versal_mpu_regions);
+diff --git a/bsps/include/peripheral_maps/xilinx_versal.h b/bsps/include/peripheral_maps/xilinx_versal.h
+new file mode 100644
+index 0000000000..e66de844af
+--- /dev/null
++++ b/bsps/include/peripheral_maps/xilinx_versal.h
+@@ -0,0 +1,89 @@
++/**
++ * @file
++ * @ingroup RTEMSBSPsShared
++ * @brief Xilinx Versal Peripheral memory map.
++ */
++
++/*
++ * Copyright (C) 2025 Airbus Defence and Space
++ *
++ * Written by Remi Debord <remi.debord@airbus.com>
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
++ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef LIBBSP_SHARED_PERIPHERAL_MAPS_VERSAL
++#define LIBBSP_SHARED_PERIPHERAL_MAPS_VERSAL
++
++/* Data derived from https://docs.amd.com/r/en-US/am011-versal-acap-trm/4-GB-Processor-System-Address-Map */
++
++/* LPD IO Peripherals */
++#define VERSAL_UART0 (0xFF000000)
++#define VERSAL_UART1 (0xFF010000)
++#define VERSAL_I2C0 (0xFF020000)
++#define VERSAL_I2C1 (0xFF030000)
++#define VERSAL_SPI0 (0xFF040000)
++#define VERSAL_SPI1 (0xFF050000)
++#define VERSAL_CAN0 (0xFF060000)
++#define VERSAL_CAN1 (0xFF070000)
++#define VERSAL_GPIO (0xFF0B0000)
++#define VERSAL_GEM0 (0xFF0C0000)
++#define VERSAL_GEM1 (0xFF0D0000)
++
++/* LPD System Registers */
++#define VERSAL_IPI (0xFF300000)
++#define VERSAL_TTC0 (0xFF0E0000)
++#define VERSAL_TTC1 (0xFF0F0000)
++#define VERSAL_TTC2 (0xFF100000)
++#define VERSAL_TTC3 (0xFF110000)
++#define VERSAL_LPD_SWDT (0xFF120000)
++#define VERSAL_OCM_XMPU (0xFF980000)
++#define VERSAL_LPD_XPPU (0xFF990000)
++#define VERSAL_LPD_DMA_CH0 (0xFFA80000)
++#define VERSAL_LPD_DMA_CH1 (0xFFA90000)
++#define VERSAL_LPD_DMA_CH2 (0xFFAA0000)
++#define VERSAL_LPD_DMA_CH3 (0xFFAB0000)
++#define VERSAL_LPD_DMA_CH4 (0xFFAC0000)
++#define VERSAL_LPD_DMA_CH5 (0xFFAD0000)
++#define VERSAL_LPD_DMA_CH6 (0xFFAE0000)
++#define VERSAL_LPD_DMA_CH7 (0xFFAF0000)
++
++/* System Interrupt Table */
++
++/* SPIs */
++#define VERSAL_IRQ_UART_0 50
++#define VERSAL_IRQ_UART_1 51
++
++#define VERSAL_IRQ_TTC_0_0 69
++#define VERSAL_IRQ_TTC_0_1 70
++#define VERSAL_IRQ_TTC_0_2 71
++#define VERSAL_IRQ_TTC_1_0 72
++#define VERSAL_IRQ_TTC_1_1 73
++#define VERSAL_IRQ_TTC_1_2 74
++#define VERSAL_IRQ_TTC_2_0 75
++#define VERSAL_IRQ_TTC_2_1 76
++#define VERSAL_IRQ_TTC_2_2 77
++#define VERSAL_IRQ_TTC_3_0 78
++#define VERSAL_IRQ_TTC_3_1 79
++#define VERSAL_IRQ_TTC_3_2 80
++
++#endif /* LIBBSP_SHARED_PERIPHERAL_MAPS_VERSAL */
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/abi.yml b/spec/build/bsps/arm/xilinx-versal-rpu/abi.yml
+new file mode 100644
+index 0000000000..0d80c955c9
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/abi.yml
+@@ -0,0 +1,21 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-string: null
++- split: null
++- env-append: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value:
++  - -march=armv7-r
++  - -mthumb
++  - -mfpu=vfpv3-d16
++  - -mfloat-abi=hard
++description: |
++  ABI flags
++enabled-by: true
++links: []
++name: ABI_FLAGS
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu.yml b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu.yml
+new file mode 100644
+index 0000000000..9b59e58025
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu.yml
+@@ -0,0 +1,17 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++arch: arm
++bsp: versal_rpu_lock_step
++build-type: bsp
++cflags: []
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++cppflags: []
++enabled-by: true
++family: xilinx-versal-rpu
++includes: []
++install: []
++links:
++- role: build-dependency
++  uid: grp
++source: []
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu0.yml b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu0.yml
+new file mode 100644
+index 0000000000..dbc85a112f
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu0.yml
+@@ -0,0 +1,17 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++arch: arm
++bsp: versal_rpu_split_0
++build-type: bsp
++cflags: []
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++cppflags: []
++enabled-by: true
++family: xilinx-versal-rpu
++includes: []
++install: []
++links:
++- role: build-dependency
++  uid: grp
++source: []
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu1.yml b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu1.yml
+new file mode 100644
+index 0000000000..fc730104d3
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu1.yml
+@@ -0,0 +1,17 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++arch: arm
++bsp: versal_rpu_split_1
++build-type: bsp
++cflags: []
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++cppflags: []
++enabled-by: true
++family: xilinx-versal-rpu
++includes: []
++install: []
++links:
++- role: build-dependency
++  uid: grp
++source: []
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml b/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
+new file mode 100644
+index 0000000000..17911c05b9
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
+@@ -0,0 +1,95 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++build-type: group
++cflags: []
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++cppflags: []
++cxxflags: []
++enabled-by: true
++includes: []
++install: []
++ldflags: []
++links:
++- role: build-dependency
++  uid: ../grp
++- role: build-dependency
++  uid: ../start
++- role: build-dependency
++  uid: abi
++- role: build-dependency
++  uid: optlockstep
++- role: build-dependency
++  uid: optsplitindex
++- role: build-dependency
++  uid: optmematcmori
++- role: build-dependency
++  uid: optmematcmlen
++- role: build-dependency
++  uid: optmembtcmori
++- role: build-dependency
++  uid: optmembtcmlen
++- role: build-dependency
++  uid: optmemocmori
++- role: build-dependency
++  uid: optmemocmlen
++- role: build-dependency
++  uid: optmemddrori
++- role: build-dependency
++  uid: optmemddrlen
++- role: build-dependency
++  uid: optmemddrrpuori
++- role: build-dependency
++  uid: optmemddrrpulen
++- role: build-dependency
++  uid: optmemnocacheori
++- role: build-dependency
++  uid: optmemnocachelen
++- role: build-dependency
++  uid: optmemdevplori
++- role: build-dependency
++  uid: optmemdevpllen
++- role: build-dependency
++  uid: optmemdevpsori
++- role: build-dependency
++  uid: optmemdevpslen
++- role: build-dependency
++  uid: optclkuart
++- role: build-dependency
++  uid: optconsoleirq
++- role: build-dependency
++  uid: optconminor
++- role: build-dependency
++  uid: ../../optxilclockttcbaseaddr
++- role: build-dependency
++  uid: ../../optxilclockttcirq
++- role: build-dependency
++  uid: ../../optxilclockttcrefclk
++- role: build-dependency
++  uid: optresetvec
++- role: build-dependency
++  uid: obj
++- role: build-dependency
++  uid: ../../dev/irq/objarmgicv2
++- role: build-dependency
++  uid: ../../obj
++- role: build-dependency
++  uid: ../../objirq
++- role: build-dependency
++  uid: ../../objdevserialarmpl011
++- role: build-dependency
++  uid: ../../objdevspizynq
++- role: build-dependency
++  uid: ../../objdevspixil
++- role: build-dependency
++  uid: ../../objmem
++- role: build-dependency
++  uid: ../../opto2
++- role: build-dependency
++  uid: linkcmds
++- role: build-dependency
++  uid: linkcmdsmemory
++- role: build-dependency
++  uid: ../../bspopts
++type: build
++use-after: []
++use-before: []
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml
+new file mode 100644
+index 0000000000..53d33b1a61
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml
+@@ -0,0 +1,46 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++build-type: config-file
++content: |
++  INCLUDE linkcmds.memory
++
++  REGION_ALIAS ("REGION_START",          ATCM);
++  REGION_ALIAS ("REGION_VECTOR",         ATCM);
++  REGION_ALIAS ("REGION_TEXT",           DDR_RPU);
++  REGION_ALIAS ("REGION_TEXT_LOAD",      DDR_RPU);
++  REGION_ALIAS ("REGION_RODATA",         DDR_RPU);
++  REGION_ALIAS ("REGION_RODATA_LOAD",    DDR_RPU);
++  REGION_ALIAS ("REGION_DATA",           DDR_RPU);
++  REGION_ALIAS ("REGION_DATA_LOAD",      DDR_RPU);
++  REGION_ALIAS ("REGION_FAST_TEXT",      DDR_RPU);
++  REGION_ALIAS ("REGION_FAST_TEXT_LOAD", DDR_RPU);
++  REGION_ALIAS ("REGION_FAST_DATA",      DDR_RPU);
++  REGION_ALIAS ("REGION_FAST_DATA_LOAD", DDR_RPU);
++  REGION_ALIAS ("REGION_BSS",            DDR_RPU);
++  REGION_ALIAS ("REGION_WORK",           DDR_RPU);
++  REGION_ALIAS ("REGION_STACK",          DDR_RPU);
++  REGION_ALIAS ("REGION_NOCACHE",        NOCACHE);
++  REGION_ALIAS ("REGION_NOCACHE_LOAD",   NOCACHE);
++
++  bsp_stack_abt_size = DEFINED (bsp_stack_abt_size) ? bsp_stack_abt_size : 1024;
++
++  bsp_vector_table_in_start_section = 1;
++
++  /*
++   * Please note that the OCM may be also used by bootloaders or the
++   * ARM Trusted Firmware (ATF).  You have to make sure that the OCM is shared
++   * without conflicts.
++   */
++  SECTIONS {
++    .ocm : {
++      *(SORT(.ocm*));
++    } > OCM AT > OCM
++  }
++
++  INCLUDE linkcmds.armv4
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++enabled-by: true
++install-path: ${BSP_LIBDIR}
++links: []
++target: linkcmds
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
+new file mode 100644
+index 0000000000..27ad10b9f2
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
+@@ -0,0 +1,52 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++build-type: config-file
++content: |
++  MEMORY {
++    ATCM : ORIGIN = ${VERSAL_MEMORY_ATCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_ATCM_LENGTH:#010x}
++    BTCM : ORIGIN = ${VERSAL_MEMORY_BTCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_BTCM_LENGTH:#010x}
++    DDR : ORIGIN = ${VERSAL_MEMORY_DDR_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DDR_LENGTH:#010x}
++    DDR_RPU : ORIGIN = ${VERSAL_MEMORY_DDR_RPU_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DDR_RPU_LENGTH:#010x}
++    NOCACHE : ORIGIN = ${VERSAL_MEMORY_NOCACHE_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_NOCACHE_LENGTH:#010x}
++    DEVPL : ORIGIN = ${VERSAL_MEMORY_DEVPL_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DEVPL_LENGTH:#010x}
++    DEVPS : ORIGIN = ${VERSAL_MEMORY_DEVPS_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DEVPS_LENGTH:#010x}
++    OCM : ORIGIN = ${VERSAL_MEMORY_OCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_OCM_LENGTH:#010x}
++  }
++
++  versal_memory_atcm_begin = ORIGIN (ATCM);
++  versal_memory_atcm_end = ORIGIN (ATCM) + LENGTH (ATCM);
++  versal_memory_atcm_size = LENGTH (ATCM);
++
++  versal_memory_btcm_begin = ORIGIN (BTCM);
++  versal_memory_btcm_end = ORIGIN (BTCM) + LENGTH (BTCM);
++  versal_memory_btcm_size = LENGTH (BTCM);
++
++  versal_memory_ddr_begin = ORIGIN (DDR);
++  versal_memory_ddr_end = ORIGIN (DDR) + LENGTH (DDR);
++  versal_memory_ddr_size = LENGTH (DDR);
++
++  versal_memory_ddr_rpu_begin = ORIGIN (DDR_RPU);
++  versal_memory_ddr_rpu_end = ORIGIN (DDR_RPU) + LENGTH (DDR_RPU);
++  versal_memory_ddr_rpu_size = LENGTH (DDR_RPU);
++
++  versal_memory_nocache_begin = ORIGIN (NOCACHE);
++  versal_memory_nocache_end = ORIGIN (NOCACHE) + LENGTH (NOCACHE);
++  versal_memory_nocache_size = LENGTH (NOCACHE);
++
++  versal_memory_devpl_begin = ORIGIN (DEVPL);
++  versal_memory_devpl_end = ORIGIN (DEVPL) + LENGTH (DEVPL);
++  versal_memory_devpl_size = LENGTH (DEVPL);
++
++  versal_memory_devps_begin = ORIGIN (DEVPS);
++  versal_memory_devps_end = ORIGIN (DEVPS) + LENGTH (DEVPS);
++  versal_memory_devps_size = LENGTH (DEVPS);
++
++  versal_memory_ocm_begin = ORIGIN (OCM);
++  versal_memory_ocm_end = ORIGIN (OCM) + LENGTH (OCM);
++  versal_memory_ocm_size = LENGTH (OCM);
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++enabled-by: true
++install-path: ${BSP_LIBDIR}
++links: []
++target: linkcmds.memory
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/obj.yml b/spec/build/bsps/arm/xilinx-versal-rpu/obj.yml
+new file mode 100644
+index 0000000000..a5066c775e
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/obj.yml
+@@ -0,0 +1,44 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++build-type: objects
++cflags: []
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++cppflags: []
++cxxflags: []
++enabled-by: true
++includes: []
++install:
++- destination: ${BSP_INCLUDEDIR}
++  source:
++  - bsps/arm/xilinx-versal-rpu/include/bsp.h
++- destination: ${BSP_INCLUDEDIR}/bsp
++  source:
++  - bsps/arm/xilinx-versal-rpu/include/bsp/irq.h
++  - bsps/arm/xilinx-versal-rpu/include/bsp/memory.h
++  - bsps/arm/xilinx-versal-rpu/include/bsp/xil-compat.h
++  - bsps/include/bsp/xil-compat-common.h
++- destination: ${BSP_INCLUDEDIR}/peripheral_maps
++  source:
++  - bsps/include/peripheral_maps/xilinx_versal.h
++links: []
++source:
++- bsps/arm/shared/cache/cache-cp15.c
++- bsps/arm/shared/cache/cache-v7ar-disable-data.S
++- bsps/arm/shared/cp15/arm-cp15-set-exception-handler.c
++- bsps/arm/shared/start/bsp-start-memcpy.S
++- bsps/arm/xilinx-versal-rpu/console/console.c
++- bsps/arm/xilinx-versal-rpu/dev/serial/versal-uart.c
++- bsps/arm/xilinx-versal-rpu/start/bspreset.c
++- bsps/arm/xilinx-versal-rpu/start/bspstart.c
++- bsps/arm/xilinx-versal-rpu/start/bspstarthooks.c
++- bsps/arm/xilinx-versal-rpu/start/mpu-config.c
++- bsps/shared/dev/clock/xil-ttc.c
++- bsps/shared/dev/btimer/btimer-cpucounter.c
++- bsps/shared/dev/getentropy/getentropy-cpucounter.c
++- bsps/shared/dev/irq/arm-gicv2-zynqmp.c
++- bsps/shared/dev/serial/console-termios.c
++- bsps/shared/irq/irq-default-handler.c
++- bsps/shared/start/gettargethash-default.c
++- bsps/shared/start/sbrk.c
++- bsps/shared/start/stackalloc.c
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optclkuart.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optclkuart.yml
+new file mode 100644
+index 0000000000..d5754e9ee5
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optclkuart.yml
+@@ -0,0 +1,17 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 100000000
++description: |
++  Versal UART clock frequency in Hz
++enabled-by: true
++format: '{}'
++links: []
++name: VERSAL_CLOCK_UART
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optconminor.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optconminor.yml
+new file mode 100644
+index 0000000000..59b756be91
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optconminor.yml
+@@ -0,0 +1,17 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0
++description: |
++  minor number of console device
++enabled-by: true
++format: '{}'
++links: []
++name: BSP_CONSOLE_MINOR
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optconsoleirq.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optconsoleirq.yml
+new file mode 100644
+index 0000000000..b14596c5a3
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optconsoleirq.yml
+@@ -0,0 +1,17 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-boolean: null
++- define-condition: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: false
++description: |
++  Use the Termios interrupt mode in the console driver (unused by default).
++enabled-by: true
++format: '{}'
++links: []
++name: BSP_CONSOLE_USE_INTERRUPTS
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optlockstep.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optlockstep.yml
+new file mode 100644
+index 0000000000..f59af25958
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optlockstep.yml
+@@ -0,0 +1,37 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-boolean: null
++- define-condition: null
++- env-enable: null
++- comment: |
++    In lock step mode, the ATCM and BTCM can be used together as a contiguous
++    memory region.  In this case, we set the ATCM size to the combined size,
++    the BTCM size is set to zero, and the VERSAL_MEMORY_ATCM_OR_BTCM
++    environment variable is set to ATCM.  In split mode, the ATCM and BTCM are
++    separate memory regions.  In this case, the VERSAL_MEMORY_ATCM_OR_BTCM
++    environment variable is set to BTCM.  The VERSAL_MEMORY_ATCM_OR_BTCM
++    environment variable is used by the linker script to select memory regions.
++- set-value-enabled-by:
++  - enabled-by: VERSAL_RPU_LOCK_STEP_MODE
++    value: ATCM
++  - enabled-by: true
++    value: BTCM
++- env-assign: VERSAL_MEMORY_ATCM_OR_BTCM
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by:
++  - arm/versal_rpu_split_0
++  - arm/versal_rpu_split_1
++  value: false
++- enabled-by: true
++  value: true
++description: |
++  If this option is true, then the Cortex-R5F cores of the RPU shall operate in
++  lock-step mode, otherwise they shall operate in split mode.
++enabled-by: true
++format: '{}'
++links: []
++name: VERSAL_RPU_LOCK_STEP_MODE
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmlen.yml
+new file mode 100644
+index 0000000000..6c39bafcb5
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmlen.yml
+@@ -0,0 +1,22 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: VERSAL_RPU_LOCK_STEP_MODE
++  value: 0x00020000
++- enabled-by: true
++  value: 0x00010000
++description: |
++  This option defines the length in bytes of the tightly-coupled memory A
++  (ATCM).
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_ATCM_LENGTH
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmori.yml
+new file mode 100644
+index 0000000000..bd8f15eae5
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmori.yml
+@@ -0,0 +1,20 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x00000000
++description: |
++  This option defines the address of the tightly-coupled memory A (ATCM)
++  origin.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_ATCM_ORIGIN
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmlen.yml
+new file mode 100644
+index 0000000000..b10e450d64
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmlen.yml
+@@ -0,0 +1,22 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: VERSAL_RPU_LOCK_STEP_MODE
++  value: 0x00020000
++- enabled-by: true
++  value: 0x00010000
++description: |
++  This option defines the length in bytes of the tightly-coupled memory B
++  (BTCM).
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_BTCM_LENGTH
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmori.yml
+new file mode 100644
+index 0000000000..099bce15f5
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmori.yml
+@@ -0,0 +1,20 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x00020000
++description: |
++  This option defines the address for the tightly-coupled memory B (BTCM)
++  origin.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_BTCM_ORIGIN
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml
+new file mode 100644
+index 0000000000..cd8ed1335b
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml
+@@ -0,0 +1,20 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x80000000
++description: |
++  This option defines the length in bytes of the DDR memory area reachable by
++  the RPU.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_DDR_LENGTH
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml
+new file mode 100644
+index 0000000000..4dce18991c
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml
+@@ -0,0 +1,20 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x00000000
++description: |
++  This option defines the start ddress of the DDR memory area reachable by the
++  RPU.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_DDR_ORIGIN
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml
+new file mode 100644
+index 0000000000..c1dd4abf41
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml
+@@ -0,0 +1,21 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x00400000
++description: |
++  This option defines the length in bytes of the DDR memory area used by the
++  RPU. If the non-cacheable memory area is located in the DDR memory, then this
++  area shall be excluded from the area specified by this option.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_DDR_RPU_LENGTH
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml
+new file mode 100644
+index 0000000000..4d14dde63f
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml
+@@ -0,0 +1,21 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x3ed00000
++description: |
++  This option defines the start address of the DDR memory used by the RPU.
++  If the non-cacheable memory area is located in the DDR memory, then this
++  area shall be excluded from the area specified by this option.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_DDR_RPU_ORIGIN
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
+new file mode 100644
+index 0000000000..3a0a0f01dd
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
+@@ -0,0 +1,20 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x40000000
++description: |
++  This option defines the length in bytes of the PL device memory area.
++  (PS to PL AXI Interface from LPD).
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_DEVPL_LENGTH
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml
+new file mode 100644
+index 0000000000..c751d0caab
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml
+@@ -0,0 +1,20 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x80000000
++description: |
++  This option defines the address of the PL device memory area
++  (PS to PL AXI Interface from LPD).
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_DEVPL_ORIGIN
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpslen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpslen.yml
+new file mode 100644
+index 0000000000..03abae4fb2
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpslen.yml
+@@ -0,0 +1,19 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x40000000
++description: |
++  This option defines the length in bytes of the PS devices memory area.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_DEVPS_LENGTH
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpsori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpsori.yml
+new file mode 100644
+index 0000000000..3d11d63d9b
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpsori.yml
+@@ -0,0 +1,19 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0xc0000000
++description: |
++  This option defines the address of the PS devices memory area.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_DEVPS_ORIGIN
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml
+new file mode 100644
+index 0000000000..5a6a179d51
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml
+@@ -0,0 +1,19 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x00100000
++description: |
++  This option defines the length in bytes of the non-cacheable memory area.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_NOCACHE_LENGTH
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml
+new file mode 100644
+index 0000000000..d3b2705744
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml
+@@ -0,0 +1,19 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x00000000
++description: |
++  This option defines the address of the non-cacheable memory area.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_NOCACHE_ORIGIN
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml
+new file mode 100644
+index 0000000000..2d096b2a1e
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml
+@@ -0,0 +1,21 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x00040000
++description: |
++  This option defines the length in bytes of the On-Chip Memory (OCM).
++  Please note that the OCM may be also used by bootloaders or the
++  ARM Trusted Firmware (ATF).
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_OCM_LENGTH
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmori.yml
+new file mode 100644
+index 0000000000..5acc9c8b03
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmori.yml
+@@ -0,0 +1,21 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0xfffc0000
++description: |
++  This option defines the address of the On-Chip Memory (OCM).
++  Please note that the OCM may be also used by bootloaders or the
++  ARM Trusted Firmware (ATF).
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_OCM_ORIGIN
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optresetvec.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optresetvec.yml
+new file mode 100644
+index 0000000000..ecb9f439f8
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optresetvec.yml
+@@ -0,0 +1,16 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-boolean: null
++- define-condition: null
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: false
++description: |
++  reset vector address for BSP start
++enabled-by: true
++links: []
++name: BSP_START_RESET_VECTOR
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optsplitindex.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optsplitindex.yml
+new file mode 100644
+index 0000000000..c99d99b793
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optsplitindex.yml
+@@ -0,0 +1,27 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-in-set:
++  - 0
++  - 1
++- format-and-define: null
++- env-assign: null
++- set-value: VERSAL_RPU_SPLIT_INDEX_${VERSAL_RPU_SPLIT_INDEX}
++- substitute: null
++- env-append: ENABLE
++build-type: option
++copyrights:
++- Copyright (C) 2025 Airbus Defence and Space
++default:
++- enabled-by: arm/versal_rpu_split_1
++  value: 1
++- enabled-by: true
++  value: 0
++description: |
++  This option defines the RPU core index (0 or 1).
++enabled-by:
++  not: VERSAL_RPU_LOCK_STEP_MODE
++format: '{}'
++links: []
++name: VERSAL_RPU_SPLIT_INDEX
++type: build
+diff --git a/spec/build/bsps/optxilclockttcbaseaddr.yml b/spec/build/bsps/optxilclockttcbaseaddr.yml
+index fa771c8ac5..98e3dc5803 100644
+--- a/spec/build/bsps/optxilclockttcbaseaddr.yml
++++ b/spec/build/bsps/optxilclockttcbaseaddr.yml
+@@ -8,6 +8,8 @@ copyrights:
+ default:
+ - enabled-by: ZYNQMP_RPU_SPLIT_INDEX_1
+   value: 0xff110004
++- enabled-by: VERSAL_RPU_SPLIT_INDEX_1
++  value: 0xff110004
+ - enabled-by: true
+   value: 0xff110000
+ description: |
+diff --git a/spec/build/bsps/optxilclockttcirq.yml b/spec/build/bsps/optxilclockttcirq.yml
+index 799d982d30..b9d4edf31d 100644
+--- a/spec/build/bsps/optxilclockttcirq.yml
++++ b/spec/build/bsps/optxilclockttcirq.yml
+@@ -8,6 +8,10 @@ copyrights:
+ default:
+ - enabled-by: ZYNQMP_RPU_SPLIT_INDEX_1
+   value: 69
++- enabled-by: VERSAL_RPU_SPLIT_INDEX_1
++  value: 79
++- enabled-by: bsps/arm/xilinx-versal-rpu
++  value: 78
+ - enabled-by: true
+   value: 68
+ description: |
+-- 
+2.46.2
+
