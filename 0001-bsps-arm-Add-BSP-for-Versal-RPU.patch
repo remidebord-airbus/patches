@@ -1,4 +1,4 @@
-From 7079b5dc85d39b145b7305248ff4399bb4d4b845 Mon Sep 17 00:00:00 2001
+From e4ccdc3a56cdb8524b8223be2192bd9ae878b1f3 Mon Sep 17 00:00:00 2001
 From: Remi Debord <Remi.Debord@fr.airbus.com>
 Date: Mon, 22 Dec 2025 16:21:55 +0100
 Subject: [PATCH] bsps/arm: Add BSP for Versal RPU
@@ -21,35 +21,34 @@ Subject: [PATCH] bsps/arm: Add BSP for Versal RPU
  .../bsps/arm/xilinx-versal-rpu/bsprpu.yml     |  17 +
  .../bsps/arm/xilinx-versal-rpu/bsprpu0.yml    |  17 +
  .../bsps/arm/xilinx-versal-rpu/bsprpu1.yml    |  17 +
- spec/build/bsps/arm/xilinx-versal-rpu/grp.yml |  95 +++++
- .../bsps/arm/xilinx-versal-rpu/linkcmds.yml   |  46 +++
+ spec/build/bsps/arm/xilinx-versal-rpu/grp.yml |  93 +++++
+ .../bsps/arm/xilinx-versal-rpu/linkcmds.yml   |  50 +++
  .../arm/xilinx-versal-rpu/linkcmdsmemory.yml  |  52 +++
  spec/build/bsps/arm/xilinx-versal-rpu/obj.yml |  44 ++
  .../bsps/arm/xilinx-versal-rpu/optclkuart.yml |  17 +
  .../arm/xilinx-versal-rpu/optconminor.yml     |  17 +
  .../arm/xilinx-versal-rpu/optconsoleirq.yml   |  17 +
- .../arm/xilinx-versal-rpu/optlockstep.yml     |  37 ++
+ .../arm/xilinx-versal-rpu/optlockstep.yml     |  23 ++
  .../arm/xilinx-versal-rpu/optmematcmlen.yml   |  22 +
  .../arm/xilinx-versal-rpu/optmematcmori.yml   |  20 +
  .../arm/xilinx-versal-rpu/optmembtcmlen.yml   |  22 +
  .../arm/xilinx-versal-rpu/optmembtcmori.yml   |  20 +
  .../arm/xilinx-versal-rpu/optmemddrlen.yml    |  20 +
  .../arm/xilinx-versal-rpu/optmemddrori.yml    |  20 +
- .../arm/xilinx-versal-rpu/optmemddrrpulen.yml |  21 +
- .../arm/xilinx-versal-rpu/optmemddrrpuori.yml |  21 +
+ .../arm/xilinx-versal-rpu/optmemddrrpulen.yml |  20 +
+ .../arm/xilinx-versal-rpu/optmemddrrpuori.yml |  19 +
  .../arm/xilinx-versal-rpu/optmemdevpllen.yml  |  20 +
  .../arm/xilinx-versal-rpu/optmemdevplori.yml  |  20 +
  .../arm/xilinx-versal-rpu/optmemdevpslen.yml  |  19 +
  .../arm/xilinx-versal-rpu/optmemdevpsori.yml  |  19 +
  .../xilinx-versal-rpu/optmemnocachelen.yml    |  19 +
- .../xilinx-versal-rpu/optmemnocacheori.yml    |  19 +
  .../arm/xilinx-versal-rpu/optmemocmlen.yml    |  21 +
  .../arm/xilinx-versal-rpu/optmemocmori.yml    |  21 +
  .../arm/xilinx-versal-rpu/optresetvec.yml     |  16 +
  .../arm/xilinx-versal-rpu/optsplitindex.yml   |  27 ++
  spec/build/bsps/optxilclockttcbaseaddr.yml    |   2 +
  spec/build/bsps/optxilclockttcirq.yml         |   4 +
- 45 files changed, 2089 insertions(+)
+ 44 files changed, 2055 insertions(+)
  create mode 100644 bsps/arm/xilinx-versal-rpu/console/console.c
  create mode 100644 bsps/arm/xilinx-versal-rpu/dev/serial/versal-uart.c
  create mode 100644 bsps/arm/xilinx-versal-rpu/include/bsp.h
@@ -88,7 +87,6 @@ Subject: [PATCH] bsps/arm: Add BSP for Versal RPU
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpslen.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpsori.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml
- create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemocmori.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optresetvec.yml
@@ -1312,7 +1310,7 @@ index 0000000000..b3338ed23f
 +}
 diff --git a/bsps/arm/xilinx-versal-rpu/start/mpu-config.c b/bsps/arm/xilinx-versal-rpu/start/mpu-config.c
 new file mode 100644
-index 0000000000..5ed6dfd29a
+index 0000000000..87a7832e76
 --- /dev/null
 +++ b/bsps/arm/xilinx-versal-rpu/start/mpu-config.c
 @@ -0,0 +1,80 @@
@@ -1328,7 +1326,7 @@ index 0000000000..5ed6dfd29a
 + */
 +
 +/*
-+ * Copyright (C) 2025 Airbus Defence and Space
++ * Copyright (C) 2026 Airbus Defence and Space
 + *
 + * Written by Remi Debord <remi.debord@airbus.com>
 + *
@@ -1493,7 +1491,7 @@ index 0000000000..e66de844af
 +#endif /* LIBBSP_SHARED_PERIPHERAL_MAPS_VERSAL */
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/abi.yml b/spec/build/bsps/arm/xilinx-versal-rpu/abi.yml
 new file mode 100644
-index 0000000000..0d80c955c9
+index 0000000000..a0924c4c51
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/abi.yml
 @@ -0,0 +1,21 @@
@@ -1504,7 +1502,7 @@ index 0000000000..0d80c955c9
 +- env-append: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value:
@@ -1520,7 +1518,7 @@ index 0000000000..0d80c955c9
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu.yml b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu.yml
 new file mode 100644
-index 0000000000..9b59e58025
+index 0000000000..31de5df527
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu.yml
 @@ -0,0 +1,17 @@
@@ -1530,7 +1528,7 @@ index 0000000000..9b59e58025
 +build-type: bsp
 +cflags: []
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +cppflags: []
 +enabled-by: true
 +family: xilinx-versal-rpu
@@ -1543,7 +1541,7 @@ index 0000000000..9b59e58025
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu0.yml b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu0.yml
 new file mode 100644
-index 0000000000..dbc85a112f
+index 0000000000..9a9abbe581
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu0.yml
 @@ -0,0 +1,17 @@
@@ -1553,7 +1551,7 @@ index 0000000000..dbc85a112f
 +build-type: bsp
 +cflags: []
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +cppflags: []
 +enabled-by: true
 +family: xilinx-versal-rpu
@@ -1566,7 +1564,7 @@ index 0000000000..dbc85a112f
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu1.yml b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu1.yml
 new file mode 100644
-index 0000000000..fc730104d3
+index 0000000000..88edbecee1
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/bsprpu1.yml
 @@ -0,0 +1,17 @@
@@ -1576,7 +1574,7 @@ index 0000000000..fc730104d3
 +build-type: bsp
 +cflags: []
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +cppflags: []
 +enabled-by: true
 +family: xilinx-versal-rpu
@@ -1589,15 +1587,15 @@ index 0000000000..fc730104d3
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml b/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
 new file mode 100644
-index 0000000000..17911c05b9
+index 0000000000..d84d2a40a5
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,93 @@
 +SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 +build-type: group
 +cflags: []
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +cppflags: []
 +cxxflags: []
 +enabled-by: true
@@ -1635,8 +1633,6 @@ index 0000000000..17911c05b9
 +  uid: optmemddrrpuori
 +- role: build-dependency
 +  uid: optmemddrrpulen
-+- role: build-dependency
-+  uid: optmemnocacheori
 +- role: build-dependency
 +  uid: optmemnocachelen
 +- role: build-dependency
@@ -1690,10 +1686,10 @@ index 0000000000..17911c05b9
 +use-before: []
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml
 new file mode 100644
-index 0000000000..53d33b1a61
+index 0000000000..001b22427e
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml
-@@ -0,0 +1,46 @@
+@@ -0,0 +1,50 @@
 +SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 +build-type: config-file
 +content: |
@@ -1721,6 +1717,10 @@ index 0000000000..53d33b1a61
 +
 +  bsp_vector_table_in_start_section = 1;
 +
++  /* define symbols required by xil_cache.c */
++  _stack_end = bsp_section_stack_end;
++  __undef_stack = bsp_section_stack_begin;
++
 +  /*
 +   * Please note that the OCM may be also used by bootloaders or the
 +   * ARM Trusted Firmware (ATF).  You have to make sure that the OCM is shared
@@ -1734,7 +1734,7 @@ index 0000000000..53d33b1a61
 +
 +  INCLUDE linkcmds.armv4
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +enabled-by: true
 +install-path: ${BSP_LIBDIR}
 +links: []
@@ -1742,7 +1742,7 @@ index 0000000000..53d33b1a61
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
 new file mode 100644
-index 0000000000..27ad10b9f2
+index 0000000000..0b0905fccf
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
 @@ -0,0 +1,52 @@
@@ -1753,8 +1753,8 @@ index 0000000000..27ad10b9f2
 +    ATCM : ORIGIN = ${VERSAL_MEMORY_ATCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_ATCM_LENGTH:#010x}
 +    BTCM : ORIGIN = ${VERSAL_MEMORY_BTCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_BTCM_LENGTH:#010x}
 +    DDR : ORIGIN = ${VERSAL_MEMORY_DDR_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DDR_LENGTH:#010x}
-+    DDR_RPU : ORIGIN = ${VERSAL_MEMORY_DDR_RPU_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DDR_RPU_LENGTH:#010x}
-+    NOCACHE : ORIGIN = ${VERSAL_MEMORY_NOCACHE_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_NOCACHE_LENGTH:#010x}
++    DDR_RPU : ORIGIN = ${VERSAL_MEMORY_DDR_RPU_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DDR_RPU_LENGTH:#010x} 
++    NOCACHE : ORIGIN = ${VERSAL_MEMORY_DDR_RPU_ORIGIN:#010x} + ${VERSAL_MEMORY_DDR_RPU_LENGTH:#010x}, LENGTH = ${VERSAL_MEMORY_NOCACHE_LENGTH:#010x}
 +    DEVPL : ORIGIN = ${VERSAL_MEMORY_DEVPL_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DEVPL_LENGTH:#010x}
 +    DEVPS : ORIGIN = ${VERSAL_MEMORY_DEVPS_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DEVPS_LENGTH:#010x}
 +    OCM : ORIGIN = ${VERSAL_MEMORY_OCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_OCM_LENGTH:#010x}
@@ -1792,7 +1792,7 @@ index 0000000000..27ad10b9f2
 +  versal_memory_ocm_end = ORIGIN (OCM) + LENGTH (OCM);
 +  versal_memory_ocm_size = LENGTH (OCM);
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +enabled-by: true
 +install-path: ${BSP_LIBDIR}
 +links: []
@@ -1800,7 +1800,7 @@ index 0000000000..27ad10b9f2
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/obj.yml b/spec/build/bsps/arm/xilinx-versal-rpu/obj.yml
 new file mode 100644
-index 0000000000..a5066c775e
+index 0000000000..fbc93b8bb7
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/obj.yml
 @@ -0,0 +1,44 @@
@@ -1808,7 +1808,7 @@ index 0000000000..a5066c775e
 +build-type: objects
 +cflags: []
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +cppflags: []
 +cxxflags: []
 +enabled-by: true
@@ -1850,7 +1850,7 @@ index 0000000000..a5066c775e
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optclkuart.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optclkuart.yml
 new file mode 100644
-index 0000000000..d5754e9ee5
+index 0000000000..f4e2df69b2
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optclkuart.yml
 @@ -0,0 +1,17 @@
@@ -1860,7 +1860,7 @@ index 0000000000..d5754e9ee5
 +- define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 100000000
@@ -1873,7 +1873,7 @@ index 0000000000..d5754e9ee5
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optconminor.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optconminor.yml
 new file mode 100644
-index 0000000000..59b756be91
+index 0000000000..7c467aaf24
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optconminor.yml
 @@ -0,0 +1,17 @@
@@ -1883,7 +1883,7 @@ index 0000000000..59b756be91
 +- define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0
@@ -1896,7 +1896,7 @@ index 0000000000..59b756be91
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optconsoleirq.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optconsoleirq.yml
 new file mode 100644
-index 0000000000..b14596c5a3
+index 0000000000..15a4f71683
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optconsoleirq.yml
 @@ -0,0 +1,17 @@
@@ -1906,7 +1906,7 @@ index 0000000000..b14596c5a3
 +- define-condition: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: false
@@ -1919,32 +1919,18 @@ index 0000000000..b14596c5a3
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optlockstep.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optlockstep.yml
 new file mode 100644
-index 0000000000..f59af25958
+index 0000000000..6f7f8503bf
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optlockstep.yml
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,23 @@
 +SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 +actions:
 +- get-boolean: null
 +- define-condition: null
 +- env-enable: null
-+- comment: |
-+    In lock step mode, the ATCM and BTCM can be used together as a contiguous
-+    memory region.  In this case, we set the ATCM size to the combined size,
-+    the BTCM size is set to zero, and the VERSAL_MEMORY_ATCM_OR_BTCM
-+    environment variable is set to ATCM.  In split mode, the ATCM and BTCM are
-+    separate memory regions.  In this case, the VERSAL_MEMORY_ATCM_OR_BTCM
-+    environment variable is set to BTCM.  The VERSAL_MEMORY_ATCM_OR_BTCM
-+    environment variable is used by the linker script to select memory regions.
-+- set-value-enabled-by:
-+  - enabled-by: VERSAL_RPU_LOCK_STEP_MODE
-+    value: ATCM
-+  - enabled-by: true
-+    value: BTCM
-+- env-assign: VERSAL_MEMORY_ATCM_OR_BTCM
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by:
 +  - arm/versal_rpu_split_0
@@ -1962,7 +1948,7 @@ index 0000000000..f59af25958
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmlen.yml
 new file mode 100644
-index 0000000000..6c39bafcb5
+index 0000000000..204292ceae
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmlen.yml
 @@ -0,0 +1,22 @@
@@ -1974,7 +1960,7 @@ index 0000000000..6c39bafcb5
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: VERSAL_RPU_LOCK_STEP_MODE
 +  value: 0x00020000
@@ -1990,7 +1976,7 @@ index 0000000000..6c39bafcb5
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmori.yml
 new file mode 100644
-index 0000000000..bd8f15eae5
+index 0000000000..646af31ea5
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmematcmori.yml
 @@ -0,0 +1,20 @@
@@ -2002,7 +1988,7 @@ index 0000000000..bd8f15eae5
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x00000000
@@ -2016,7 +2002,7 @@ index 0000000000..bd8f15eae5
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmlen.yml
 new file mode 100644
-index 0000000000..b10e450d64
+index 0000000000..650e9403ac
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmlen.yml
 @@ -0,0 +1,22 @@
@@ -2028,7 +2014,7 @@ index 0000000000..b10e450d64
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: VERSAL_RPU_LOCK_STEP_MODE
 +  value: 0x00020000
@@ -2044,7 +2030,7 @@ index 0000000000..b10e450d64
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmori.yml
 new file mode 100644
-index 0000000000..099bce15f5
+index 0000000000..4eb7e4db0e
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmori.yml
 @@ -0,0 +1,20 @@
@@ -2056,7 +2042,7 @@ index 0000000000..099bce15f5
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x00020000
@@ -2070,7 +2056,7 @@ index 0000000000..099bce15f5
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml
 new file mode 100644
-index 0000000000..cd8ed1335b
+index 0000000000..6d12d9711c
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml
 @@ -0,0 +1,20 @@
@@ -2082,7 +2068,7 @@ index 0000000000..cd8ed1335b
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x80000000
@@ -2096,7 +2082,7 @@ index 0000000000..cd8ed1335b
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml
 new file mode 100644
-index 0000000000..4dce18991c
+index 0000000000..ca3f378f78
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml
 @@ -0,0 +1,20 @@
@@ -2108,12 +2094,12 @@ index 0000000000..4dce18991c
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x00000000
 +description: |
-+  This option defines the start ddress of the DDR memory area reachable by the
++  This option defines the start address of the DDR memory area reachable by the
 +  RPU.
 +enabled-by: true
 +format: '{:#010x}'
@@ -2122,10 +2108,10 @@ index 0000000000..4dce18991c
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml
 new file mode 100644
-index 0000000000..c1dd4abf41
+index 0000000000..ed63df2b57
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,20 @@
 +SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 +actions:
 +- get-integer: null
@@ -2134,14 +2120,13 @@ index 0000000000..c1dd4abf41
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x00400000
 +description: |
 +  This option defines the length in bytes of the DDR memory area used by the
-+  RPU. If the non-cacheable memory area is located in the DDR memory, then this
-+  area shall be excluded from the area specified by this option.
++  RPU.
 +enabled-by: true
 +format: '{:#010x}'
 +links: []
@@ -2149,10 +2134,10 @@ index 0000000000..c1dd4abf41
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml
 new file mode 100644
-index 0000000000..4d14dde63f
+index 0000000000..3d092799e9
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,19 @@
 +SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 +actions:
 +- get-integer: null
@@ -2161,14 +2146,12 @@ index 0000000000..4d14dde63f
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x3ed00000
 +description: |
-+  This option defines the start address of the DDR memory used by the RPU.
-+  If the non-cacheable memory area is located in the DDR memory, then this
-+  area shall be excluded from the area specified by this option.
++  This option defines the start address of the DDR memory area used by the RPU.
 +enabled-by: true
 +format: '{:#010x}'
 +links: []
@@ -2176,7 +2159,7 @@ index 0000000000..4d14dde63f
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
 new file mode 100644
-index 0000000000..3a0a0f01dd
+index 0000000000..5540780d88
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
 @@ -0,0 +1,20 @@
@@ -2188,7 +2171,7 @@ index 0000000000..3a0a0f01dd
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x40000000
@@ -2202,7 +2185,7 @@ index 0000000000..3a0a0f01dd
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml
 new file mode 100644
-index 0000000000..c751d0caab
+index 0000000000..1659409066
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml
 @@ -0,0 +1,20 @@
@@ -2214,7 +2197,7 @@ index 0000000000..c751d0caab
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x80000000
@@ -2228,7 +2211,7 @@ index 0000000000..c751d0caab
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpslen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpslen.yml
 new file mode 100644
-index 0000000000..03abae4fb2
+index 0000000000..f77ceaadf6
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpslen.yml
 @@ -0,0 +1,19 @@
@@ -2240,7 +2223,7 @@ index 0000000000..03abae4fb2
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x40000000
@@ -2253,7 +2236,7 @@ index 0000000000..03abae4fb2
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpsori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpsori.yml
 new file mode 100644
-index 0000000000..3d11d63d9b
+index 0000000000..38cf5f737f
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpsori.yml
 @@ -0,0 +1,19 @@
@@ -2265,7 +2248,7 @@ index 0000000000..3d11d63d9b
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0xc0000000
@@ -2278,7 +2261,7 @@ index 0000000000..3d11d63d9b
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml
 new file mode 100644
-index 0000000000..5a6a179d51
+index 0000000000..d073682ff7
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml
 @@ -0,0 +1,19 @@
@@ -2290,7 +2273,7 @@ index 0000000000..5a6a179d51
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x00100000
@@ -2301,34 +2284,9 @@ index 0000000000..5a6a179d51
 +links: []
 +name: VERSAL_MEMORY_NOCACHE_LENGTH
 +type: build
-diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml
-new file mode 100644
-index 0000000000..d3b2705744
---- /dev/null
-+++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml
-@@ -0,0 +1,19 @@
-+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
-+actions:
-+- get-integer: null
-+- assert-uint32: null
-+- env-assign: null
-+- format-and-define: null
-+build-type: option
-+copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
-+default:
-+- enabled-by: true
-+  value: 0x00000000
-+description: |
-+  This option defines the address of the non-cacheable memory area.
-+enabled-by: true
-+format: '{:#010x}'
-+links: []
-+name: VERSAL_MEMORY_NOCACHE_ORIGIN
-+type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml
 new file mode 100644
-index 0000000000..2d096b2a1e
+index 0000000000..471f3693b2
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml
 @@ -0,0 +1,21 @@
@@ -2340,7 +2298,7 @@ index 0000000000..2d096b2a1e
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0x00040000
@@ -2355,7 +2313,7 @@ index 0000000000..2d096b2a1e
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmori.yml
 new file mode 100644
-index 0000000000..5acc9c8b03
+index 0000000000..7e052f0311
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmori.yml
 @@ -0,0 +1,21 @@
@@ -2367,7 +2325,7 @@ index 0000000000..5acc9c8b03
 +- format-and-define: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: 0xfffc0000
@@ -2382,7 +2340,7 @@ index 0000000000..5acc9c8b03
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optresetvec.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optresetvec.yml
 new file mode 100644
-index 0000000000..ecb9f439f8
+index 0000000000..af6afb5921
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optresetvec.yml
 @@ -0,0 +1,16 @@
@@ -2392,7 +2350,7 @@ index 0000000000..ecb9f439f8
 +- define-condition: null
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
 +  value: false
@@ -2404,7 +2362,7 @@ index 0000000000..ecb9f439f8
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optsplitindex.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optsplitindex.yml
 new file mode 100644
-index 0000000000..c99d99b793
+index 0000000000..4f83a9b0d1
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optsplitindex.yml
 @@ -0,0 +1,27 @@
@@ -2421,7 +2379,7 @@ index 0000000000..c99d99b793
 +- env-append: ENABLE
 +build-type: option
 +copyrights:
-+- Copyright (C) 2025 Airbus Defence and Space
++- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: arm/versal_rpu_split_1
 +  value: 1
@@ -2464,5 +2422,5 @@ index 799d982d30..b9d4edf31d 100644
    value: 68
  description: |
 -- 
-2.34.1
+2.46.2
 
