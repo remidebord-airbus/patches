@@ -1,4 +1,4 @@
-From e4ccdc3a56cdb8524b8223be2192bd9ae878b1f3 Mon Sep 17 00:00:00 2001
+From 0828f219bacaa70f5146f4cc0c0915d9e5dd2476 Mon Sep 17 00:00:00 2001
 From: Remi Debord <Remi.Debord@fr.airbus.com>
 Date: Mon, 22 Dec 2025 16:21:55 +0100
 Subject: [PATCH] bsps/arm: Add BSP for Versal RPU
@@ -15,15 +15,16 @@ Subject: [PATCH] bsps/arm: Add BSP for Versal RPU
  bsps/arm/xilinx-versal-rpu/start/bspreset.c   |  64 +++
  bsps/arm/xilinx-versal-rpu/start/bspstart.c   |  52 +++
  .../xilinx-versal-rpu/start/bspstarthooks.c   |  81 ++++
- bsps/arm/xilinx-versal-rpu/start/mpu-config.c |  80 ++++
+ bsps/arm/xilinx-versal-rpu/start/mpu-config.c |  76 ++++
  bsps/include/peripheral_maps/xilinx_versal.h  |  89 ++++
+ bsps/shared/dev/clock/xil-ttc.c               |  12 +-
  spec/build/bsps/arm/xilinx-versal-rpu/abi.yml |  21 +
  .../bsps/arm/xilinx-versal-rpu/bsprpu.yml     |  17 +
  .../bsps/arm/xilinx-versal-rpu/bsprpu0.yml    |  17 +
  .../bsps/arm/xilinx-versal-rpu/bsprpu1.yml    |  17 +
- spec/build/bsps/arm/xilinx-versal-rpu/grp.yml |  93 +++++
+ spec/build/bsps/arm/xilinx-versal-rpu/grp.yml |  91 +++++
  .../bsps/arm/xilinx-versal-rpu/linkcmds.yml   |  50 +++
- .../arm/xilinx-versal-rpu/linkcmdsmemory.yml  |  52 +++
+ .../arm/xilinx-versal-rpu/linkcmdsmemory.yml  |  47 +++
  spec/build/bsps/arm/xilinx-versal-rpu/obj.yml |  44 ++
  .../bsps/arm/xilinx-versal-rpu/optclkuart.yml |  17 +
  .../arm/xilinx-versal-rpu/optconminor.yml     |  17 +
@@ -33,22 +34,21 @@ Subject: [PATCH] bsps/arm: Add BSP for Versal RPU
  .../arm/xilinx-versal-rpu/optmematcmori.yml   |  20 +
  .../arm/xilinx-versal-rpu/optmembtcmlen.yml   |  22 +
  .../arm/xilinx-versal-rpu/optmembtcmori.yml   |  20 +
- .../arm/xilinx-versal-rpu/optmemddrlen.yml    |  20 +
- .../arm/xilinx-versal-rpu/optmemddrori.yml    |  20 +
- .../arm/xilinx-versal-rpu/optmemddrrpulen.yml |  20 +
- .../arm/xilinx-versal-rpu/optmemddrrpuori.yml |  19 +
+ .../arm/xilinx-versal-rpu/optmemddrlen.yml    |  21 +
+ .../arm/xilinx-versal-rpu/optmemddrori.yml    |  23 ++
  .../arm/xilinx-versal-rpu/optmemdevpllen.yml  |  20 +
  .../arm/xilinx-versal-rpu/optmemdevplori.yml  |  20 +
  .../arm/xilinx-versal-rpu/optmemdevpslen.yml  |  19 +
  .../arm/xilinx-versal-rpu/optmemdevpsori.yml  |  19 +
  .../xilinx-versal-rpu/optmemnocachelen.yml    |  19 +
+ .../xilinx-versal-rpu/optmemnocacheori.yml    |  19 +
  .../arm/xilinx-versal-rpu/optmemocmlen.yml    |  21 +
  .../arm/xilinx-versal-rpu/optmemocmori.yml    |  21 +
  .../arm/xilinx-versal-rpu/optresetvec.yml     |  16 +
  .../arm/xilinx-versal-rpu/optsplitindex.yml   |  27 ++
  spec/build/bsps/optxilclockttcbaseaddr.yml    |   2 +
  spec/build/bsps/optxilclockttcirq.yml         |   4 +
- 44 files changed, 2055 insertions(+)
+ 44 files changed, 2038 insertions(+), 2 deletions(-)
  create mode 100644 bsps/arm/xilinx-versal-rpu/console/console.c
  create mode 100644 bsps/arm/xilinx-versal-rpu/dev/serial/versal-uart.c
  create mode 100644 bsps/arm/xilinx-versal-rpu/include/bsp.h
@@ -80,13 +80,12 @@ Subject: [PATCH] bsps/arm: Add BSP for Versal RPU
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmembtcmori.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml
- create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml
- create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpslen.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpsori.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml
+ create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemocmori.yml
  create mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optresetvec.yml
@@ -1310,10 +1309,10 @@ index 0000000000..b3338ed23f
 +}
 diff --git a/bsps/arm/xilinx-versal-rpu/start/mpu-config.c b/bsps/arm/xilinx-versal-rpu/start/mpu-config.c
 new file mode 100644
-index 0000000000..87a7832e76
+index 0000000000..870eda0d54
 --- /dev/null
 +++ b/bsps/arm/xilinx-versal-rpu/start/mpu-config.c
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,76 @@
 +/* SPDX-License-Identifier: BSD-2-Clause */
 +
 +/**
@@ -1368,10 +1367,6 @@ index 0000000000..87a7832e76
 +  }, {
 +    .begin = (uintptr_t)versal_memory_ddr_begin,
 +    .size = (uintptr_t)versal_memory_ddr_size,
-+    .attributes = ARMV7_PMSA_READ_WRITE_CACHED
-+  }, {
-+    .begin = (uintptr_t)versal_memory_ddr_rpu_begin,
-+    .size = (uintptr_t)versal_memory_ddr_rpu_size,
 +    .attributes = ARMV7_PMSA_READ_WRITE_CACHED
 +  }, {
 +    .begin = (uintptr_t)versal_memory_devpl_begin,
@@ -1489,6 +1484,38 @@ index 0000000000..e66de844af
 +#define VERSAL_IRQ_TTC_3_2 80
 +
 +#endif /* LIBBSP_SHARED_PERIPHERAL_MAPS_VERSAL */
+diff --git a/bsps/shared/dev/clock/xil-ttc.c b/bsps/shared/dev/clock/xil-ttc.c
+index 5bf8c46689..2d76d1dcec 100644
+--- a/bsps/shared/dev/clock/xil-ttc.c
++++ b/bsps/shared/dev/clock/xil-ttc.c
+@@ -179,17 +179,25 @@ static void xil_ttc_clock_driver_support_at_tick(xil_ttc_timecounter *tc)
+ 
+ static rtems_interrupt_entry xil_ttc_interrupt_entry;
+ 
++#if (!defined(ZYNQMP_RPU_LOCK_STEP_MODE) && ZYNQMP_RPU_SPLIT_INDEX != 0)
++#define XILINX_RPU_SPLIT_INDEX ZYNQMP_RPU_SPLIT_INDEX
++#endif
++
++#if (!defined(VERSAL_RPU_LOCK_STEP_MODE) && VERSAL_RPU_SPLIT_INDEX != 0)
++#define XILINX_RPU_SPLIT_INDEX VERSAL_RPU_SPLIT_INDEX
++#endif
++
+ static void xil_ttc_clock_driver_support_install_isr(
+   rtems_interrupt_handler handler
+ )
+ {
+   rtems_status_code sc;
+ 
+-#if !defined(ZYNQMP_RPU_LOCK_STEP_MODE) && ZYNQMP_RPU_SPLIT_INDEX != 0
++#ifdef XILINX_RPU_SPLIT_INDEX
+   Processor_mask affinity;
+   _Processor_mask_From_uint32_t(
+     &affinity,
+-    UINT32_C(1) << ZYNQMP_RPU_SPLIT_INDEX,
++    UINT32_C(1) << XILINX_RPU_SPLIT_INDEX,
+     0
+   );
+   (void) bsp_interrupt_set_affinity(XIL_CLOCK_TTC_IRQ, &affinity);
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/abi.yml b/spec/build/bsps/arm/xilinx-versal-rpu/abi.yml
 new file mode 100644
 index 0000000000..a0924c4c51
@@ -1587,10 +1614,10 @@ index 0000000000..88edbecee1
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml b/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
 new file mode 100644
-index 0000000000..d84d2a40a5
+index 0000000000..b262169f89
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,91 @@
 +SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 +build-type: group
 +cflags: []
@@ -1630,9 +1657,7 @@ index 0000000000..d84d2a40a5
 +- role: build-dependency
 +  uid: optmemddrlen
 +- role: build-dependency
-+  uid: optmemddrrpuori
-+- role: build-dependency
-+  uid: optmemddrrpulen
++  uid: optmemnocacheori
 +- role: build-dependency
 +  uid: optmemnocachelen
 +- role: build-dependency
@@ -1686,7 +1711,7 @@ index 0000000000..d84d2a40a5
 +use-before: []
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml
 new file mode 100644
-index 0000000000..001b22427e
+index 0000000000..5f227948d0
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmds.yml
 @@ -0,0 +1,50 @@
@@ -1697,19 +1722,19 @@ index 0000000000..001b22427e
 +
 +  REGION_ALIAS ("REGION_START",          ATCM);
 +  REGION_ALIAS ("REGION_VECTOR",         ATCM);
-+  REGION_ALIAS ("REGION_TEXT",           DDR_RPU);
-+  REGION_ALIAS ("REGION_TEXT_LOAD",      DDR_RPU);
-+  REGION_ALIAS ("REGION_RODATA",         DDR_RPU);
-+  REGION_ALIAS ("REGION_RODATA_LOAD",    DDR_RPU);
-+  REGION_ALIAS ("REGION_DATA",           DDR_RPU);
-+  REGION_ALIAS ("REGION_DATA_LOAD",      DDR_RPU);
-+  REGION_ALIAS ("REGION_FAST_TEXT",      DDR_RPU);
-+  REGION_ALIAS ("REGION_FAST_TEXT_LOAD", DDR_RPU);
-+  REGION_ALIAS ("REGION_FAST_DATA",      DDR_RPU);
-+  REGION_ALIAS ("REGION_FAST_DATA_LOAD", DDR_RPU);
-+  REGION_ALIAS ("REGION_BSS",            DDR_RPU);
-+  REGION_ALIAS ("REGION_WORK",           DDR_RPU);
-+  REGION_ALIAS ("REGION_STACK",          DDR_RPU);
++  REGION_ALIAS ("REGION_TEXT",           DDR);
++  REGION_ALIAS ("REGION_TEXT_LOAD",      DDR);
++  REGION_ALIAS ("REGION_RODATA",         DDR);
++  REGION_ALIAS ("REGION_RODATA_LOAD",    DDR);
++  REGION_ALIAS ("REGION_DATA",           DDR);
++  REGION_ALIAS ("REGION_DATA_LOAD",      DDR);
++  REGION_ALIAS ("REGION_FAST_TEXT",      DDR);
++  REGION_ALIAS ("REGION_FAST_TEXT_LOAD", DDR);
++  REGION_ALIAS ("REGION_FAST_DATA",      DDR);
++  REGION_ALIAS ("REGION_FAST_DATA_LOAD", DDR);
++  REGION_ALIAS ("REGION_BSS",            DDR);
++  REGION_ALIAS ("REGION_WORK",           DDR);
++  REGION_ALIAS ("REGION_STACK",          DDR);
 +  REGION_ALIAS ("REGION_NOCACHE",        NOCACHE);
 +  REGION_ALIAS ("REGION_NOCACHE_LOAD",   NOCACHE);
 +
@@ -1742,10 +1767,10 @@ index 0000000000..001b22427e
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
 new file mode 100644
-index 0000000000..0b0905fccf
+index 0000000000..7b152a7b79
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,47 @@
 +SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 +build-type: config-file
 +content: |
@@ -1753,8 +1778,7 @@ index 0000000000..0b0905fccf
 +    ATCM : ORIGIN = ${VERSAL_MEMORY_ATCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_ATCM_LENGTH:#010x}
 +    BTCM : ORIGIN = ${VERSAL_MEMORY_BTCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_BTCM_LENGTH:#010x}
 +    DDR : ORIGIN = ${VERSAL_MEMORY_DDR_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DDR_LENGTH:#010x}
-+    DDR_RPU : ORIGIN = ${VERSAL_MEMORY_DDR_RPU_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DDR_RPU_LENGTH:#010x} 
-+    NOCACHE : ORIGIN = ${VERSAL_MEMORY_DDR_RPU_ORIGIN:#010x} + ${VERSAL_MEMORY_DDR_RPU_LENGTH:#010x}, LENGTH = ${VERSAL_MEMORY_NOCACHE_LENGTH:#010x}
++    NOCACHE : ORIGIN = ${VERSAL_MEMORY_NOCACHE_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_NOCACHE_LENGTH:#010x}
 +    DEVPL : ORIGIN = ${VERSAL_MEMORY_DEVPL_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DEVPL_LENGTH:#010x}
 +    DEVPS : ORIGIN = ${VERSAL_MEMORY_DEVPS_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DEVPS_LENGTH:#010x}
 +    OCM : ORIGIN = ${VERSAL_MEMORY_OCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_OCM_LENGTH:#010x}
@@ -1771,10 +1795,6 @@ index 0000000000..0b0905fccf
 +  versal_memory_ddr_begin = ORIGIN (DDR);
 +  versal_memory_ddr_end = ORIGIN (DDR) + LENGTH (DDR);
 +  versal_memory_ddr_size = LENGTH (DDR);
-+
-+  versal_memory_ddr_rpu_begin = ORIGIN (DDR_RPU);
-+  versal_memory_ddr_rpu_end = ORIGIN (DDR_RPU) + LENGTH (DDR_RPU);
-+  versal_memory_ddr_rpu_size = LENGTH (DDR_RPU);
 +
 +  versal_memory_nocache_begin = ORIGIN (NOCACHE);
 +  versal_memory_nocache_end = ORIGIN (NOCACHE) + LENGTH (NOCACHE);
@@ -2056,10 +2076,10 @@ index 0000000000..4eb7e4db0e
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml
 new file mode 100644
-index 0000000000..6d12d9711c
+index 0000000000..e63dbd82b9
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrlen.yml
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,21 @@
 +SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 +actions:
 +- get-integer: null
@@ -2071,10 +2091,11 @@ index 0000000000..6d12d9711c
 +- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
-+  value: 0x80000000
++  value: 0x01000000
 +description: |
-+  This option defines the length in bytes of the DDR memory area reachable by
-+  the RPU.
++  This option defines the length in bytes of the DDR memory area used by the
++  RPU. If the non-cacheable memory area is located in the DDR memory, then this
++  area shall be excluded from the area specified by this option.
 +enabled-by: true
 +format: '{:#010x}'
 +links: []
@@ -2082,10 +2103,10 @@ index 0000000000..6d12d9711c
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml
 new file mode 100644
-index 0000000000..ca3f378f78
+index 0000000000..abe982c6e0
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrori.yml
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,23 @@
 +SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 +actions:
 +- get-integer: null
@@ -2096,66 +2117,18 @@ index 0000000000..ca3f378f78
 +copyrights:
 +- Copyright (C) 2026 Airbus Defence and Space
 +default:
++- enabled-by: VERSAL_RPU_SPLIT_INDEX_1
++  value: 0x3f000000
 +- enabled-by: true
-+  value: 0x00000000
++  value: 0x3e000000
 +description: |
-+  This option defines the start address of the DDR memory area reachable by the
-+  RPU.
++  This option defines the address of the DDR memory area used by the RPU. If
++  the non-cacheable memory area is located in the DDR memory, then this area
++  shall be excluded from the area specified by this option.
 +enabled-by: true
 +format: '{:#010x}'
 +links: []
 +name: VERSAL_MEMORY_DDR_ORIGIN
-+type: build
-diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml
-new file mode 100644
-index 0000000000..ed63df2b57
---- /dev/null
-+++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpulen.yml
-@@ -0,0 +1,20 @@
-+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
-+actions:
-+- get-integer: null
-+- assert-uint32: null
-+- env-assign: null
-+- format-and-define: null
-+build-type: option
-+copyrights:
-+- Copyright (C) 2026 Airbus Defence and Space
-+default:
-+- enabled-by: true
-+  value: 0x00400000
-+description: |
-+  This option defines the length in bytes of the DDR memory area used by the
-+  RPU.
-+enabled-by: true
-+format: '{:#010x}'
-+links: []
-+name: VERSAL_MEMORY_DDR_RPU_LENGTH
-+type: build
-diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml
-new file mode 100644
-index 0000000000..3d092799e9
---- /dev/null
-+++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemddrrpuori.yml
-@@ -0,0 +1,19 @@
-+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
-+actions:
-+- get-integer: null
-+- assert-uint32: null
-+- env-assign: null
-+- format-and-define: null
-+build-type: option
-+copyrights:
-+- Copyright (C) 2026 Airbus Defence and Space
-+default:
-+- enabled-by: true
-+  value: 0x3ed00000
-+description: |
-+  This option defines the start address of the DDR memory area used by the RPU.
-+enabled-by: true
-+format: '{:#010x}'
-+links: []
-+name: VERSAL_MEMORY_DDR_RPU_ORIGIN
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
 new file mode 100644
@@ -2261,7 +2234,7 @@ index 0000000000..38cf5f737f
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml
 new file mode 100644
-index 0000000000..d073682ff7
+index 0000000000..884d6566e8
 --- /dev/null
 +++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocachelen.yml
 @@ -0,0 +1,19 @@
@@ -2276,13 +2249,38 @@ index 0000000000..d073682ff7
 +- Copyright (C) 2026 Airbus Defence and Space
 +default:
 +- enabled-by: true
-+  value: 0x00100000
++  value: 0x00000000
 +description: |
 +  This option defines the length in bytes of the non-cacheable memory area.
 +enabled-by: true
 +format: '{:#010x}'
 +links: []
 +name: VERSAL_MEMORY_NOCACHE_LENGTH
++type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml
+new file mode 100644
+index 0000000000..e7258a8704
+--- /dev/null
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/optmemnocacheori.yml
+@@ -0,0 +1,19 @@
++SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
++actions:
++- get-integer: null
++- assert-uint32: null
++- env-assign: null
++- format-and-define: null
++build-type: option
++copyrights:
++- Copyright (C) 2026 Airbus Defence and Space
++default:
++- enabled-by: true
++  value: 0x00000000
++description: |
++  This option defines the address of the non-cacheable memory area.
++enabled-by: true
++format: '{:#010x}'
++links: []
++name: VERSAL_MEMORY_NOCACHE_ORIGIN
 +type: build
 diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemocmlen.yml
 new file mode 100644
