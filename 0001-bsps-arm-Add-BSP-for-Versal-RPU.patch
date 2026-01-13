@@ -1,7 +1,7 @@
 From 0828f219bacaa70f5146f4cc0c0915d9e5dd2476 Mon Sep 17 00:00:00 2001
 From: Remi Debord <Remi.Debord@fr.airbus.com>
 Date: Mon, 22 Dec 2025 16:21:55 +0100
-Subject: [PATCH] bsps/arm: Add BSP for Versal RPU
+Subject: [PATCH 1/2] bsps/arm: Add BSP for Versal RPU
 
 ---
  bsps/arm/xilinx-versal-rpu/console/console.c  | 150 +++++++

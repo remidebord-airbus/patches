@@ -1,7 +1,8 @@
 From b8f9e2e7a6442794b88f40343a2f3bcfcc4efdfe Mon Sep 17 00:00:00 2001
 From: Remi Debord <Remi.Debord@fr.airbus.com>
 Date: Mon, 12 Jan 2026 15:12:06 +0100
-Subject: [PATCH] user/bsps/arm: Add documentation for Xilinx Versal RPU BSP
+Subject: [PATCH 1/2] user/bsps/arm: Add documentation for Xilinx Versal RPU
+ BSP
 
 ---
  bsp-howto/coding-doxygen-bsp.md    |   8 +-
@@ -37,7 +38,7 @@ index 0000000..b99a40f
 @@ -0,0 +1,306 @@
 +% SPDX-License-Identifier: CC-BY-SA-4.0
 +
-+% Copyright (C) 2026 Airbus Defence and Space
++% Copyright (C) 2026 Airbus Defense and Space
 +
 +(BSP_arm_versal_rpu_lock_step)=
 +
