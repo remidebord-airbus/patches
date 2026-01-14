@@ -1,0 +1,140 @@
+From c8bd29b52a0a5f9bcc7f50ba0b34c33a750ecb14 Mon Sep 17 00:00:00 2001
+From: Remi Debord <Remi.Debord@fr.airbus.com>
+Date: Wed, 14 Jan 2026 14:45:31 +0100
+Subject: [PATCH 3/3] bsps/arm/xilinx-versal-rpu: Remove PL memory range from
+ MPU initialization
+
+---
+ .../xilinx-versal-rpu/include/bsp/memory.h    |  4 ----
+ bsps/arm/xilinx-versal-rpu/start/mpu-config.c |  4 ----
+ spec/build/bsps/arm/xilinx-versal-rpu/grp.yml |  4 ----
+ .../arm/xilinx-versal-rpu/linkcmdsmemory.yml  |  5 -----
+ .../arm/xilinx-versal-rpu/optmemdevpllen.yml  | 20 -------------------
+ .../arm/xilinx-versal-rpu/optmemdevplori.yml  | 20 -------------------
+ 6 files changed, 57 deletions(-)
+ delete mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
+ delete mode 100644 spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml
+
+diff --git a/bsps/arm/xilinx-versal-rpu/include/bsp/memory.h b/bsps/arm/xilinx-versal-rpu/include/bsp/memory.h
+index 560d8b502a..63076b8c03 100644
+--- a/bsps/arm/xilinx-versal-rpu/include/bsp/memory.h
++++ b/bsps/arm/xilinx-versal-rpu/include/bsp/memory.h
+@@ -67,10 +67,6 @@ extern char versal_memory_nocache_begin[];
+ extern char versal_memory_nocache_end[];
+ extern char versal_memory_nocache_size[];
+ 
+-extern char versal_memory_devpl_begin[];
+-extern char versal_memory_devpl_end[];
+-extern char versal_memory_devpl_size[];
+-
+ extern char versal_memory_devps_begin[];
+ extern char versal_memory_devps_end[];
+ extern char versal_memory_devps_size[];
+diff --git a/bsps/arm/xilinx-versal-rpu/start/mpu-config.c b/bsps/arm/xilinx-versal-rpu/start/mpu-config.c
+index 870eda0d54..053309bd98 100644
+--- a/bsps/arm/xilinx-versal-rpu/start/mpu-config.c
++++ b/bsps/arm/xilinx-versal-rpu/start/mpu-config.c
+@@ -53,10 +53,6 @@ versal_mpu_regions[] = {
+     .begin = (uintptr_t)versal_memory_ddr_begin,
+     .size = (uintptr_t)versal_memory_ddr_size,
+     .attributes = ARMV7_PMSA_READ_WRITE_CACHED
+-  }, {
+-    .begin = (uintptr_t)versal_memory_devpl_begin,
+-    .size = (uintptr_t)versal_memory_devpl_size,
+-    .attributes = ARMV7_PMSA_SHAREABLE_DEVICE
+   }, {
+     .begin = (uintptr_t)versal_memory_devps_begin,
+     .size = (uintptr_t)versal_memory_devps_size,
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml b/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
+index b262169f89..ceccaba533 100644
+--- a/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/grp.yml
+@@ -40,10 +40,6 @@ links:
+   uid: optmemnocacheori
+ - role: build-dependency
+   uid: optmemnocachelen
+-- role: build-dependency
+-  uid: optmemdevplori
+-- role: build-dependency
+-  uid: optmemdevpllen
+ - role: build-dependency
+   uid: optmemdevpsori
+ - role: build-dependency
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
+index 7b152a7b79..057307a0fd 100644
+--- a/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
++++ b/spec/build/bsps/arm/xilinx-versal-rpu/linkcmdsmemory.yml
+@@ -6,7 +6,6 @@ content: |
+     BTCM : ORIGIN = ${VERSAL_MEMORY_BTCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_BTCM_LENGTH:#010x}
+     DDR : ORIGIN = ${VERSAL_MEMORY_DDR_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DDR_LENGTH:#010x}
+     NOCACHE : ORIGIN = ${VERSAL_MEMORY_NOCACHE_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_NOCACHE_LENGTH:#010x}
+-    DEVPL : ORIGIN = ${VERSAL_MEMORY_DEVPL_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DEVPL_LENGTH:#010x}
+     DEVPS : ORIGIN = ${VERSAL_MEMORY_DEVPS_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_DEVPS_LENGTH:#010x}
+     OCM : ORIGIN = ${VERSAL_MEMORY_OCM_ORIGIN:#010x}, LENGTH = ${VERSAL_MEMORY_OCM_LENGTH:#010x}
+   }
+@@ -27,10 +26,6 @@ content: |
+   versal_memory_nocache_end = ORIGIN (NOCACHE) + LENGTH (NOCACHE);
+   versal_memory_nocache_size = LENGTH (NOCACHE);
+ 
+-  versal_memory_devpl_begin = ORIGIN (DEVPL);
+-  versal_memory_devpl_end = ORIGIN (DEVPL) + LENGTH (DEVPL);
+-  versal_memory_devpl_size = LENGTH (DEVPL);
+-
+   versal_memory_devps_begin = ORIGIN (DEVPS);
+   versal_memory_devps_end = ORIGIN (DEVPS) + LENGTH (DEVPS);
+   versal_memory_devps_size = LENGTH (DEVPS);
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
+deleted file mode 100644
+index 5540780d88..0000000000
+--- a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevpllen.yml
++++ /dev/null
+@@ -1,20 +0,0 @@
+-SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+-actions:
+-- get-integer: null
+-- assert-uint32: null
+-- env-assign: null
+-- format-and-define: null
+-build-type: option
+-copyrights:
+-- Copyright (C) 2026 Airbus Defence and Space
+-default:
+-- enabled-by: true
+-  value: 0x40000000
+-description: |
+-  This option defines the length in bytes of the PL device memory area.
+-  (PS to PL AXI Interface from LPD).
+-enabled-by: true
+-format: '{:#010x}'
+-links: []
+-name: VERSAL_MEMORY_DEVPL_LENGTH
+-type: build
+diff --git a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml b/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml
+deleted file mode 100644
+index 1659409066..0000000000
+--- a/spec/build/bsps/arm/xilinx-versal-rpu/optmemdevplori.yml
++++ /dev/null
+@@ -1,20 +0,0 @@
+-SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+-actions:
+-- get-integer: null
+-- assert-uint32: null
+-- env-assign: null
+-- format-and-define: null
+-build-type: option
+-copyrights:
+-- Copyright (C) 2026 Airbus Defence and Space
+-default:
+-- enabled-by: true
+-  value: 0x80000000
+-description: |
+-  This option defines the address of the PL device memory area
+-  (PS to PL AXI Interface from LPD).
+-enabled-by: true
+-format: '{:#010x}'
+-links: []
+-name: VERSAL_MEMORY_DEVPL_ORIGIN
+-type: build
+-- 
+2.46.2
+
