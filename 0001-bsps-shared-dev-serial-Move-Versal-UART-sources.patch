@@ -1,0 +1,46 @@
+From 8ac5e4e7f7d33d261be1651dbb93e304c5fb40fc Mon Sep 17 00:00:00 2001
+From: Remi Debord <Remi.Debord@fr.airbus.com>
+Date: Thu, 15 Jan 2026 10:40:58 +0100
+Subject: [PATCH 1/2] bsps/shared/dev/serial: Move Versal UART sources
+
+---
+ .../xilinx-versal => }/include/dev/serial/versal-uart.h       | 0
+ .../xilinx-versal => shared}/dev/serial/versal-uart.c         | 0
+ spec/build/bsps/aarch64/xilinx-versal/obj.yml                 | 4 ++--
+ 3 files changed, 2 insertions(+), 2 deletions(-)
+ rename bsps/{aarch64/xilinx-versal => }/include/dev/serial/versal-uart.h (100%)
+ rename bsps/{aarch64/xilinx-versal => shared}/dev/serial/versal-uart.c (100%)
+
+diff --git a/bsps/aarch64/xilinx-versal/include/dev/serial/versal-uart.h b/bsps/include/dev/serial/versal-uart.h
+similarity index 100%
+rename from bsps/aarch64/xilinx-versal/include/dev/serial/versal-uart.h
+rename to bsps/include/dev/serial/versal-uart.h
+diff --git a/bsps/aarch64/xilinx-versal/dev/serial/versal-uart.c b/bsps/shared/dev/serial/versal-uart.c
+similarity index 100%
+rename from bsps/aarch64/xilinx-versal/dev/serial/versal-uart.c
+rename to bsps/shared/dev/serial/versal-uart.c
+diff --git a/spec/build/bsps/aarch64/xilinx-versal/obj.yml b/spec/build/bsps/aarch64/xilinx-versal/obj.yml
+index 1d625d456b..d4b582d525 100644
+--- a/spec/build/bsps/aarch64/xilinx-versal/obj.yml
++++ b/spec/build/bsps/aarch64/xilinx-versal/obj.yml
+@@ -19,7 +19,7 @@ install:
+   - bsps/include/bsp/xil-compat-common.h
+ - destination: ${BSP_INCLUDEDIR}/dev/serial
+   source:
+-  - bsps/aarch64/xilinx-versal/include/dev/serial/versal-uart.h
++  - bsps/include/dev/serial/versal-uart.h
+ links: []
+ source:
+ - bsps/aarch64/shared/cache/cache.c
+@@ -27,7 +27,7 @@ source:
+ - bsps/aarch64/shared/mmu/vmsav8-64.c
+ - bsps/aarch64/shared/start/start-cpu-mpidr.S
+ - bsps/aarch64/xilinx-versal/console/console.c
+-- bsps/aarch64/xilinx-versal/dev/serial/versal-uart.c
++- bsps/shared/dev/serial/versal-uart.c
+ - bsps/aarch64/xilinx-versal/start/bspstart.c
+ - bsps/aarch64/xilinx-versal/start/bspstarthooks.c
+ - bsps/aarch64/xilinx-versal/start/bspstartmmu.c
+-- 
+2.46.2
+
